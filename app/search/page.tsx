@@ -2,9 +2,10 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
-export default function SearchPage() {
+// 1. Kita pisahkan isi konten ke komponen baru
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const q = searchParams.get("q")?.trim() || "";
@@ -12,13 +13,13 @@ export default function SearchPage() {
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Ambil data dari API Laravel
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        // Kita ambil semua buku, lalu filter di client-side (atau bisa buat API search di Laravel)
-        const res = await fetch("http://127.0.0.1:8000/api/books");
+        // GANTI INI: Gunakan Environment Variable agar tidak kaku di localhost
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/api/books`);
         const data = await res.json();
         setBooks(data);
       } catch (err) {
@@ -30,23 +31,20 @@ export default function SearchPage() {
     fetchBooks();
   }, []);
 
-  // Filter buku dari API berdasarkan query pencarian
   const filteredBooks = q
     ? books.filter(
         (book) =>
           book.title.toLowerCase().includes(q.toLowerCase()) ||
           book.author.toLowerCase().includes(q.toLowerCase()) ||
-          book.category?.name.toLowerCase().includes(q.toLowerCase()) // Perhatikan ini memakai .name
+          book.category?.name.toLowerCase().includes(q.toLowerCase())
       )
     : books;
 
-  if (loading) return <div className="p-20 text-center font-bold">Sedang mencari buku...</div>;
+  if (loading) return <div className="p-20 text-center font-bold text-slate-600">Sedang mencari buku...</div>;
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] font-sans">
       <div className="max-w-6xl mx-auto p-6">
-        {/* ... (Navigasi tetap sama) ... */}
-
         <nav className="mb-8 flex items-center gap-3">
            <button onClick={() => router.push("/")} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group">
              <div className="p-2 bg-white rounded-lg shadow-sm group-hover:bg-indigo-50 border border-slate-100 transition-colors">
@@ -79,7 +77,15 @@ export default function SearchPage() {
   );
 }
 
-// Komponen Helper untuk list (agar bersih)
+// 2. Komponen Utama yang dieksport harus dibungkus Suspense
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="p-20 text-center">Memuat modul pencarian...</div>}>
+      <SearchContent />
+    </Suspense>
+  );
+}
+
 function filteredProductsList(filteredBooks: any[], q: string) {
   if (filteredBooks.length === 0) {
     return (
@@ -99,7 +105,7 @@ function filteredProductsList(filteredBooks: any[], q: string) {
         >
           <div className="overflow-hidden rounded-xl mb-4 h-52 bg-slate-100">
             <img
-              src={book.image} // Database menggunakan field 'image'
+              src={book.image}
               alt={book.title}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
