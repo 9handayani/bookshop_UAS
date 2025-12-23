@@ -1,55 +1,51 @@
+"use client";
 import Link from "next/link";
 
-interface Book {
-  img: string;
-  title: string;
-  author: string;
-  price: number;
-  discount: number;
-  slug: string;
-}
-
-interface BookCardProps {
-  book: Book;
-}
-
-export default function BookCard({ book }: BookCardProps) {
-  const finalPrice = book.price - (book.price * book.discount) / 100;
+export default function BookCard({ book }: { book: any }) {
+  const originalPrice = Number(book.price) || 0;
+  const finalPrice = Math.floor(originalPrice - (originalPrice * (book.discount || 0)) / 100);
 
   return (
-    <Link href={`/book/${book.slug}`} className="block">
-      <div className="bg-white rounded-xl shadow-md p-4 flex flex-col h-full hover:shadow-lg hover:-translate-y-1 transition">
+    <Link href={`/book/${book.slug}`} className="group h-full">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-md transition-all">
         
-        {/* GAMBAR */}
-        <img
-          src={book.img}
-          alt={book.title}
-          className="w-full h-48 object-cover rounded-lg"
-        />
+        <div className="relative aspect-square bg-slate-50 overflow-hidden">
+          <img
+            src={book.image || "/placeholder-book.jpg"}
+            alt={book.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; }}
+          />
+        </div>
 
-        {/* JUDUL */}
-        <p className="mt-3 font-semibold text-gray-900 text-sm leading-snug line-clamp-2">
-          {book.title}
-        </p>
+        {/* Tambahkan flex-grow di sini agar area p-4 mengambil sisa ruang */}
+        <div className="p-4 flex flex-col flex-grow">
+          {/* Judul: Diberi min-h agar judul 1 baris punya tinggi sama dengan 2 baris */}
+          <h3 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug min-h-[2.5rem]">
+            {book.title}
+          </h3>
+          <p className="text-[11px] text-slate-400 mb-2">{book.author}</p>
 
-        {/* AUTHOR */}
-        <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-          {book.author}
-        </p>
-
-        {/* HARGA (selalu di bawah) */}
-        <div className="mt-auto">
-          <p className="text-base font-bold text-green-600">
-            Rp {finalPrice.toLocaleString("id-ID")}
-          </p>
-
-          <p className="text-xs line-through text-gray-400">
-            Rp {book.price.toLocaleString("id-ID")}
-          </p>
-
-          <span className="text-[11px] bg-red-500 text-white px-2 py-0.5 rounded inline-block mt-1">
-            -{book.discount}%
-          </span>
+          {/* mt-auto akan mendorong div harga ini ke posisi paling bawah kartu */}
+          <div className="mt-auto">
+            <p className="text-green-600 font-bold text-sm">
+              Rp {finalPrice.toLocaleString("id-ID")}
+            </p>
+            
+            {/* Beri tinggi tetap pada area diskon agar kartu tanpa diskon tetap sejajar */}
+            <div className="min-h-[35px] flex flex-col justify-end">
+              {book.discount > 0 && (
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <span className="text-[10px] line-through text-slate-300 font-bold">
+                    Rp {originalPrice.toLocaleString("id-ID")}
+                  </span>
+                  <span className="bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm w-fit">
+                    -{book.discount}%
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </Link>

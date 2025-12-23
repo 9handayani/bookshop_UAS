@@ -3,50 +3,59 @@
 import { useEffect, useState } from "react";
 import { HiOutlineChartBar, HiOutlineCube, HiOutlineShoppingBag } from "react-icons/hi";
 
-// 1. Definisikan struktur data pesanan agar TypeScript tidak bingung
+// 1. Interface disesuaikan (Menambahkan book_title)
 interface Order {
-  id: string;
-  namaLengkap: string;
-  alamatEmail: string;
-  totalBayar: number;
+  id: number;
+  book_title: string; // Ditambahkan untuk menampilkan judul buku
+  customer_name: string;
+  email: string;
+  total_amount: string | number;
   status: string;
-  tanggal: string;
+  created_at: string;
 }
 
 export default function AdminDashboard() {
-  // 2. Beri tahu useState bahwa ini adalah array dari Order
   const [orders, setOrders] = useState<Order[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
-    const savedOrders = localStorage.getItem("orders");
-    if (savedOrders) {
+    const fetchDashboardData = async () => {
       try {
-        const parsedOrders: Order[] = JSON.parse(savedOrders);
-        setOrders(parsedOrders);
+        const response = await fetch("http://127.0.0.1:8000/api/orders", {
+          headers: { "Accept": "application/json" }
+        });
+        
+        if (response.ok) {
+          const data: Order[] = await response.json();
+          setOrders(data);
 
-        // Hitung total dengan memastikan tipe data number
-        const revenue = parsedOrders.reduce((sum, item) => sum + (Number(item.totalBayar) || 0), 0);
-        setTotalRevenue(revenue);
+          const revenue = data.reduce((sum, item) => sum + (Number(item.total_amount) || 0), 0);
+          setTotalRevenue(revenue);
+        }
       } catch (err) {
-        console.error("Gagal membaca data:", err);
+        console.error("Gagal mengambil data dashboard:", err);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    fetchDashboardData();
   }, []);
 
   const stats = [
     { label: "Jumlah Produk", value: "12", unit: "", icon: <HiOutlineCube size={24} className="text-indigo-500" /> },
     { 
       label: "Total Pesanan", 
-      value: isClient ? orders.length.toString() : "0", 
+      value: loading ? "..." : orders.length.toString(), 
       unit: "", 
       icon: <HiOutlineShoppingBag size={24} className="text-emerald-500" /> 
     },
     { 
       label: "Pendapatan Bulanan", 
-      value: isClient ? totalRevenue.toLocaleString("id-ID") : "0", 
+      value: loading ? "..." : totalRevenue.toLocaleString("id-ID"), 
       unit: "Rp ", 
       icon: <HiOutlineChartBar size={24} className="text-amber-500" /> 
     },
@@ -84,34 +93,33 @@ export default function AdminDashboard() {
             Aktivitas Terkini
           </h2>
           
-          {isClient && orders.length > 0 ? (
+          {loading ? (
+             <p className="text-center py-20 text-slate-400 italic">Sinkronisasi data...</p>
+          ) : isClient && orders.length > 0 ? (
             <div className="space-y-4">
               {[...orders].reverse().slice(0, 5).map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold uppercase">
-                      {order.namaLengkap.charAt(0)}
+                      {/* Menampilkan inisial judul buku */}
+                      {order.book_title?.charAt(0) || "B"}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-800">{order.namaLengkap} baru saja membeli buku</p>
-                      <p className="text-sm text-slate-500">{order.alamatEmail}</p>
+                      {/* HANYA MENAMPILKAN JUDUL BUKU */}
+                      <p className="font-bold text-slate-800">{order.book_title}</p>
+                      <p className="text-xs text-slate-500">Oleh: {order.customer_name}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-indigo-600">Rp {Number(order.totalBayar).toLocaleString("id-ID")}</p>
-                    <p className="text-xs text-slate-400 mt-1">{order.tanggal}</p>
+                    <p className="font-bold text-indigo-600">Rp {Number(order.total_amount).toLocaleString("id-ID")}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{new Date(order.created_at).toLocaleDateString("id-ID")}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/30">
-              <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-                <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-slate-400 italic">Belum ada aktivitas terbaru hari ini.</p>
+              <p className="text-slate-400 italic">Belum ada aktivitas di database.</p>
             </div>
           )}
         </div>

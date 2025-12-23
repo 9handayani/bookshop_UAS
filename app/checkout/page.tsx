@@ -21,9 +21,6 @@ export default function CheckoutPage() {
   const [selectedSubMethod, setSelectedSubMethod] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  /* ======================
-      AUTH PROTECTION
-  ====================== */
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/");
@@ -33,49 +30,72 @@ export default function CheckoutPage() {
   if (loading || !user) return null;
 
   /* ======================
-      CALCULATIONS
+      CALCULATIONS (FIXED)
   ====================== */
   const subtotal = checkoutItems.reduce((t, i) => t + i.price, 0);
-  const shipping = 15000;
+  const shipping = subtotal > 0 ? 15000 : 0; // Ongkir 0 jika keranjang kosong
   const discount = subtotal * 0.05;
   const total = subtotal + shipping - discount;
 
   const banks = ["BCA", "Mandiri", "BNI", "BRI"];
   const wallets = ["Gopay", "OVO", "Dana", "ShopeePay"];
 
+  // Validasi tombol: Harus isi form, pilih bayar, DAN keranjang tidak boleh kosong
   const isFormValid = 
     form.name && form.phone && form.email && form.address && 
-    paymentMethod && (paymentMethod === "cod" || selectedSubMethod);
+    paymentMethod && (paymentMethod === "cod" || selectedSubMethod) &&
+    checkoutItems.length > 0;
 
   /* ======================
-      FUNGSI PEMBAYARAN (FIXED)
-  ====================== */
+      FUNGSI PEMBAYARAN (FULL REPAIRED)
+  ===================== */
   const handlePayment = async () => {
-    setIsProcessing(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (checkoutItems.length === 0) {
+      alert("Keranjang anda kosong! Silakan pilih buku dulu.");
+      return;
+    }
 
-      const newOrder = {
-        id: `ORD-${Date.now()}`,
-        namaLengkap: form.name,
-        alamatEmail: form.email,
-        totalBayar: total,
-        status: "Perlu Dikirim",
-        tanggal: new Date().toLocaleString("id-ID"),
+    setIsProcessing(true);
+    
+    try {
+      const payload = {
+        user_id: user.id, 
+        customer_name: form.name,
+        phone_number: form.phone, // Pastikan sesuai nama kolom di migration Laravel
+        address: form.address,
+        // Menggabungkan semua judul buku menjadi satu string
+        book_title: checkoutItems.map(item => item.title).join(", "),
+        total_amount: Math.round(total), // Dibulatkan agar divalidasi sebagai 'numeric' oleh Laravel
+        payment_method: paymentMethod === "cod" 
+          ? "COD" 
+          : `${paymentMethod.toUpperCase()} (${selectedSubMethod})`,
       };
 
-      // Ambil data lama agar tidak tertimpa
-      const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-      const updatedOrders = [...existingOrders, newOrder];
-      localStorage.setItem("orders", JSON.stringify(updatedOrders));
+      // URL diperbaiki menjadi /api/orders (Jamak)
+      const response = await fetch("http://127.0.0.1:8000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-      alert("Pembayaran Berhasil! Terima kasih sudah berbelanja.");
-      
-      if (clearCart) clearCart();
-      router.push("/"); 
+      const result = await response.json();
+
+      if (response.ok) {
+        alert("Pembayaran Berhasil! Pesanan Anda telah tercatat.");
+        if (clearCart) clearCart();
+        router.push("/"); 
+      } else {
+        // Menampilkan pesan error spesifik jika validasi 422 gagal
+        console.error("Validation Errors:", result.errors);
+        alert(`Gagal: ${result.message || "Periksa kembali data anda"}`);
+      }
 
     } catch (error) {
-      alert("Terjadi kesalahan saat memproses pembayaran.");
+      console.error("Error Checkout:", error);
+      alert("Gagal terhubung ke server Laravel.");
     } finally {
       setIsProcessing(false);
     }
@@ -85,7 +105,6 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#f0f2f5] p-8 flex justify-center font-sans text-slate-800">
       <div className="w-full max-w-7xl">
         
-        {/* BUTTON BACK TO HOME */}
         <button 
           onClick={() => router.push("/")}
           className="mb-6 flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group"
@@ -98,10 +117,9 @@ export default function CheckoutPage() {
           Kembali ke Beranda
         </button>
 
-        {/* STRUKTUR FLEX UTAMA (Kembali ke md:flex-row) */}
         <div className="flex flex-col md:flex-row gap-8">
           
-          {/* LEFT: FORM PENGIRIMAN */}
+          {/* LEFT: FORM */}
           <div className="flex-[2] bg-white p-10 rounded-[30px] shadow-sm space-y-6 border border-slate-100">
             <h1 className="text-3xl font-extrabold mb-6">Detail Pengiriman</h1>
 
@@ -167,7 +185,7 @@ export default function CheckoutPage() {
               </div>
 
               {(paymentMethod === "transfer" || paymentMethod === "ewallet") && (
-                <div className="mt-5 grid grid-cols-4 gap-3 p-5 bg-slate-50 rounded-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2">
+                <div className="mt-5 grid grid-cols-4 gap-3 p-5 bg-slate-50 rounded-2xl border border-slate-100">
                   {(paymentMethod === "transfer" ? banks : wallets).map((item) => (
                     <button
                       key={item}
@@ -185,80 +203,63 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-         {/* RIGHT: RINGKASAN */}
-<div className="flex-1">
-  <div className="bg-white p-8 rounded-[30px] shadow-sm sticky top-8 border border-slate-100">
-    <h2 className="text-xl font-bold mb-6 border-b pb-4">Ringkasan Pesanan</h2>
-    
-    {/* LIST ITEM BUKU */}
-    <div className="space-y-4 mb-6">
-      {checkoutItems.map((item) => (
-        <div key={item.id} className="flex gap-4 items-center">
-          <img src={item.img} className="w-14 h-14 object-cover rounded-xl bg-slate-100" alt={item.title} />
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm truncate">{item.title}</p>
-            <p className="text-indigo-600 font-bold text-xs">Rp {item.price.toLocaleString("id-ID")}</p>
+          {/* RIGHT: SUMMARY */}
+          <div className="flex-1">
+            <div className="bg-white p-8 rounded-[30px] shadow-sm sticky top-8 border border-slate-100">
+              <h2 className="text-xl font-bold mb-6 border-b pb-4">Ringkasan Pesanan</h2>
+              
+              <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
+                {checkoutItems.length > 0 ? (
+                  checkoutItems.map((item) => (
+                    <div key={item.id} className="flex gap-4 items-center">
+                      <img src={item.img} className="w-14 h-14 object-cover rounded-xl bg-slate-100" alt={item.title} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{item.title}</p>
+                        <p className="text-indigo-600 font-bold text-xs">Rp {item.price.toLocaleString("id-ID")}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-slate-400 text-sm py-4">Keranjang Kosong</p>
+                )}
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-dashed">
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-slate-800">Rp {subtotal.toLocaleString("id-ID")}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Ongkos Kirim</span>
+                  <span className="font-semibold text-slate-800">Rp {shipping.toLocaleString("id-ID")}</span>
+                </div>
+                <div className="flex justify-between text-red-500 font-bold bg-red-50 px-3 py-1 rounded-lg text-sm">
+                  <span>Diskon (5%)</span>
+                  <span>-Rp {discount.toLocaleString("id-ID")}</span>
+                </div>
+
+                <div className="flex justify-between font-extrabold text-2xl pt-4 border-t border-slate-100">
+                  <span>Total Bayar</span>
+                  <span className="text-indigo-600">Rp {total.toLocaleString("id-ID")}</span>
+                </div>
+              </div>
+
+              <button 
+                onClick={handlePayment}
+                disabled={!isFormValid || isProcessing}
+                className="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white py-4 rounded-2xl font-bold text-lg shadow-lg transition-all flex justify-center items-center gap-2"
+              >
+                {isProcessing ? "Memproses..." : "Bayar Sekarang"}
+              </button>
+              
+              {!isFormValid && checkoutItems.length > 0 && (
+                  <p className="text-center text-[10px] text-red-400 mt-3 italic">* Lengkapi data diri & pembayaran</p>
+              )}
+              {checkoutItems.length === 0 && (
+                  <p className="text-center text-[10px] text-red-500 mt-3 font-bold">SILAKAN TAMBAH BUKU KE KERANJANG TERLEBIH DAHULU</p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-
-    {/* RINCIAN HARGA & METODE */}
-    <div className="space-y-3 pt-4 border-t border-dashed">
-      <div className="flex justify-between text-sm text-slate-500">
-        <span>Subtotal</span>
-        <span className="font-semibold text-slate-800">Rp {subtotal.toLocaleString("id-ID")}</span>
-      </div>
-      <div className="flex justify-between text-sm text-slate-500">
-        <span>Ongkos Kirim</span>
-        <span className="font-semibold text-slate-800">Rp {shipping.toLocaleString("id-ID")}</span>
-      </div>
-      <div className="flex justify-between text-red-500 font-bold bg-red-50 px-3 py-1 rounded-lg text-sm">
-        <span>Diskon (5%)</span>
-        <span>-Rp {discount.toLocaleString("id-ID")}</span>
-      </div>
-
-      {/* TAMPILAN METODE PEMBAYARAN DI RINGKASAN */}
-      <div className="flex justify-between text-sm py-2 border-t border-slate-50 mt-2">
-        <span className="text-slate-500">Metode Pembayaran</span>
-        <span className="font-bold text-indigo-600">
-          {paymentMethod ? (
-            paymentMethod === "cod" 
-              ? "COD (Bayar di Tempat)" 
-              : `${paymentMethod.toUpperCase()} - ${selectedSubMethod || "..."}`
-          ) : (
-            <span className="text-slate-300 italic font-normal text-xs">Belum dipilih</span>
-          )}
-        </span>
-      </div>
-
-      <div className="flex justify-between font-extrabold text-2xl pt-4 border-t border-slate-100">
-        <span>Total Bayar</span>
-        <span className="text-indigo-600">Rp {total.toLocaleString("id-ID")}</span>
-      </div>
-    </div>
-
-    <button 
-      onClick={handlePayment}
-      disabled={!isFormValid || isProcessing}
-      className="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
-    >
-      {isProcessing ? (
-        <>
-          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-          Memproses...
-        </>
-      ) : (
-        "Bayar Sekarang"
-      )}
-    </button>
-    
-    {!isFormValid && (
-       <p className="text-center text-[10px] text-red-400 mt-3 italic">* Mohon lengkapi data diri & pilih metode pembayaran</p>
-    )}
-  </div>
-</div>
-
         </div>
       </div>
     </div>

@@ -4,13 +4,12 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface CartItem {
   id: number;
+  slug: string;   // ✅ Tambahkan baris ini
   title: string;
   price: number;
-  img: string;
-  qty: number; // ➜ DITAMBAHKAN
+  img: string; 
+  qty: number;    // Pastikan pakai 'qty' bukan 'quantity' agar sesuai logika context kamu
 }
-
-interface Book extends CartItem {}
 
 interface CartContextType {
   cart: CartItem[];
@@ -18,88 +17,62 @@ interface CartContextType {
   removeFromCart: (id: number) => void;
   updateQty: (id: number, qty: number) => void;
   clearCart: () => void;
-
-  checkoutItems: Book[];
-  setCheckoutItems: (items: Book[]) => void;
-
-  totalPrice: number; // ➜ DITAMBAHKAN
+  checkoutItems: CartItem[];
+  setCheckoutItems: (items: CartItem[]) => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [checkoutItems, setCheckoutItems] = useState<Book[]>([]);
+  const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // ============================
-  //  LOAD CART DARI LOCALSTORAGE
-  // ============================
   useEffect(() => {
     const saved = localStorage.getItem("cart");
-    if (saved) setCart(JSON.parse(saved));
+    if (saved) {
+      try {
+        setCart(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse cart", e);
+      }
+    }
+    setIsLoaded(true);
   }, []);
 
-  // ============================
-  //  SIMPAN CART KE LOCALSTORAGE
-  // ============================
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+    if (isLoaded) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+  }, [cart, isLoaded]);
 
-  // ============================
-  //  ADD TO CART
-  // ============================
   const addToCart = (item: Omit<CartItem, "qty">) => {
     setCart((prev) => {
       const existing = prev.find((p) => p.id === item.id);
-
       if (existing) {
-        // update qty kalau produk sudah ada
         return prev.map((p) =>
           p.id === item.id ? { ...p, qty: p.qty + 1 } : p
         );
       }
-
-      // produk baru
       return [...prev, { ...item, qty: 1 }];
     });
   };
 
-  // ============================
-  //  REMOVE ITEM
-  // ============================
   const removeFromCart = (id: number) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // ============================
-  //  UPDATE QTY
-  // ============================
   const updateQty = (id: number, qty: number) => {
-    if (qty <= 0) return; // tidak boleh minus
-
+    if (qty <= 0) return;
     setCart((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, qty } : item
-      )
+      prev.map((item) => (item.id === id ? { ...item, qty } : item))
     );
   };
 
-  // ============================
-  //  CLEAR CART
-  // ============================
   const clearCart = () => {
     setCart([]);
     localStorage.removeItem("cart");
   };
-
-  // ============================
-  //  HITUNG TOTAL HARGA
-  // ============================
-  const totalPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.qty,
-    0
-  );
 
   return (
     <CartContext.Provider
@@ -111,7 +84,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         checkoutItems,
         setCheckoutItems,
-        totalPrice,
       }}
     >
       {children}
@@ -121,8 +93,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used inside CartProvider");
-  }
+  if (!context) throw new Error("useCart must be used inside CartProvider");
   return context;
 }

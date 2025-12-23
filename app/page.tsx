@@ -2,8 +2,9 @@
 import { useState, useRef, useEffect } from "react";
 import BookCard from "../app/components/BookCard";
 
+// Sesuaikan interface dengan field dari Laravel (image, bukan img)
 interface Book {
-  img: string;
+  image: string; 
   title: string;
   author: string;
   price: number;
@@ -19,8 +20,28 @@ export default function Home() {
   ];
 
   const [current, setCurrent] = useState(0);
+  const [books, setBooks] = useState<Book[]>([]); // State untuk data dari API
+  const [loading, setLoading] = useState(true);
+  
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+
+  // ========== FETCH DATA DARI LARAVEL ==========
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/books");
+        const data = await response.json();
+        setBooks(data);
+      } catch (error) {
+        console.error("Gagal mengambil data buku:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBooks();
+  }, []);
 
   // ========== AUTO SLIDE ==========
   useEffect(() => {
@@ -48,28 +69,11 @@ export default function Home() {
     if (distance < -50) prevBanner();
   };
 
-  // ====== DATA BUKU ======
-  const books: Book[] = [
-    { img: "/books/book1.jpg", title: "Mashle 12", author: "Hajime Komoto", price: 45000, discount: 30, slug: "mashle-12" },
-    { img: "/books/book2.jpg", title: "UUD 1945", author: "Tim Miracle - M&C", price: 40000, discount: 30, slug: "uud-1945" },
-    { img: "/books/book3.jpg", title: "Seporsi Mie Ayam", author: "Brian Khrisna", price: 78000, discount: 25, slug: "mie-ayam" },
-    { img: "/books/book4.jpg", title: "Optimalisasi AI", author: "Alex", price: 60000, discount: 15, slug: "ai-digital-marketing" },
-    { img: "/books/book5.jpg", title: "Piano Dasar", author: "Rendra", price: 45000, discount: 15, slug: "piano-dasar" },
-    { img: "/books/book6.jpeg", title: "Sandi nusantara 3", author: "hokky situngkir", price: 30000, discount: 15, slug: "sandi-nusantara" },
-    { img: "/books/book7.jpeg", title: "mice cartoon - telekomunikasi mengubah peradaban", author: " Muhammad mice misrad", price: 67500, discount: 25, slug: "telekomunikasi-mengubah-peradaban" },
-    { img: "/books/book8.jpeg", title: "Pembunuhan di rumah decagon 1", author: " yukito ayatsuji/hiro kiyohara", price: 40000, discount: 20, slug: "pembunuhan-di-rumah-decagon-1" },
-    { img: "/books/book9.jpeg", title: "Muros ", author: "Surya Putra", price: 63750, discount: 25, slug: "Muros" },
-    { img: "/books/book10.jpeg", title: "Petualangan Kuro : Jurasik Aquatik", author: "Jester ", price: 49000, discount: 15, slug: "petualangan-kuro-jurasik-aquatik" },
-
-
-
-  ];
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#EFF4F7] to-[#D4E1E9] px-6 sm:px-10 py-14">
 
       {/* ========= BANNER SLIDER ========= */}
       <div className="relative w-full flex flex-col items-center mb-10 select-none">
-
         <img
           src={banners[current]}
           alt="Promo Banner"
@@ -105,22 +109,21 @@ export default function Home() {
       </div>
 
       {/* ========= PRODUK ========= */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mt-6">
-        {books.map((book) => (
-          <BookCard key={book.slug} book={book} />
-        ))}
-      </div>
-
+      {loading ? (
+        <div className="text-center py-20 font-bold text-gray-500">Memuat katalog buku...</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 mt-6">
+          {books.length > 0 ? (
+            books.map((book) => (
+              <BookCard key={book.slug} book={book} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10 text-gray-400">
+              Tidak ada buku yang ditemukan di database.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-

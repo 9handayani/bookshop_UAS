@@ -10,7 +10,6 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Redirect ke /checkout atau halaman tujuan sebelumnya
   const redirect = searchParams.get("redirect") || "/checkout";
 
   const [email, setEmail] = useState("");
@@ -18,7 +17,12 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Jika user sudah terdeteksi login, langsung pindahkan
+  // --- FUNGSI BARU UNTUK SOCIAL LOGIN ---
+  const handleSocialLogin = (provider: string) => {
+    // Arahkan browser langsung ke endpoint redirect Laravel Anda
+    window.location.href = `http://127.0.0.1:8000/auth/${provider}/redirect`;
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       router.replace(redirect);
@@ -39,9 +43,8 @@ function LoginContent() {
 
     try {
       setSubmitting(true);
-      await login(email, password); // Memanggil API Laravel
+      await login(email, password);
     } catch (err: any) {
-      // Menampilkan pesan error asli dari backend jika ada
       alert(err.message || "Email atau kata sandi salah");
     } finally {
       setSubmitting(false);
@@ -59,11 +62,22 @@ function LoginContent() {
           </h2>
 
           <div className="flex justify-center gap-4 mb-8">
-            <button type="button" className="p-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600">
-              <FaGoogle size={22} />
+            {/* TOMBOL GOOGLE */}
+            <button 
+              type="button" 
+              onClick={() => handleSocialLogin('google')} // Tambahkan ini
+              className="p-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600 flex items-center justify-center"
+            >
+              <FaGoogle size={22} className="pointer-events-none" />
             </button>
-            <button type="button" className="p-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600">
-              <FaGithub size={22} />
+            
+            {/* TOMBOL GITHUB */}
+            <button 
+              type="button" 
+              onClick={() => handleSocialLogin('github')} // Tambahkan ini
+              className="p-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600 flex items-center justify-center"
+            >
+              <FaGithub size={22} className="pointer-events-none" />
             </button>
           </div>
 
@@ -106,7 +120,7 @@ function LoginContent() {
           </form>
         </div>
 
-        {/* SISI KANAN: PANEL REGISTER (PERBAIKAN CSS CONFLICT DI SINI) */}
+        {/* SISI KANAN: PANEL REGISTER */}
         <div className="hidden md:flex flex-1 bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 text-white flex-col justify-center items-center p-12 text-center">
           <h2 className="text-4xl font-bold mb-6">Halo, Teman!</h2>
           <p className="text-indigo-50 leading-relaxed mb-10 text-lg">

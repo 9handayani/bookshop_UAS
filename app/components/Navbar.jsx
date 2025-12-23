@@ -27,7 +27,7 @@ export default function Navbar() {
     { title: "UUD 1945", author: "Tim Miracle - M&C", slug: "uud-1945" },
   ];
 
-  const categories = ["Semua", "Novel", "Komik", "Self Improvement", "Pendidikan", "Musik", "Komputer"];
+  const categories = ["Semua", "Novel", "Komik/Buku", "Self Improvement", "Pendidikan", "Musik", "Komputer"];
 
   const filteredBooks = books.filter(
     (b) =>

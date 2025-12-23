@@ -1,212 +1,201 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { HiOutlineArrowLeft, HiOutlineCheckCircle, HiOutlineCloudUpload } from "react-icons/hi";
 
 export default function EditProductPage() {
   const router = useRouter();
-  const params = useParams();
-  const productId = params.id;
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [previewImage, setPreviewImage] = useState<string | null>(null); // State untuk menampilkan gambar
-  const [formData, setFormData] = useState({
+  const { id } = useParams(); 
+  
+  const [categoriesList, setCategoriesList] = useState<{id: number, name: string}[]>([]);
+  const [form, setForm] = useState({
     title: "",
+    slug: "",
     author: "",
-    category: "Novel",
+    category_id: 0,
     price: "",
+    discount: "0", 
+    rating: "0",   
     stock: "",
+    image: "",
     description: "",
-    image: null as File | null,
+    details: "" 
   });
+  const [loading, setLoading] = useState(true);
 
-  // 1. Ambil data asli dari Laravel
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/books/${productId}`);
-        const data = await response.json();
+        const catRes = await fetch("http://127.0.0.1:8000/api/categories");
+        const categories = await catRes.json();
+        setCategoriesList(categories);
+
+        const res = await fetch(`http://127.0.0.1:8000/api/books/${id}`);
+        if (!res.ok) throw new Error("Gagal mengambil data");
+        const data = await res.json();
         
-        if (response.ok) {
-          setFormData({
-            title: data.title,
-            author: data.author,
-            category: data.category,
-            price: data.price.toString(),
-            stock: data.stock.toString(),
-            description: data.description || "",
-            image: null,
-          });
-          
-          // SET PREVIEW GAMBAR: Pastikan path sesuai dengan storage Laravel kamu
-          if (data.image) {
-            setPreviewImage(`http://localhost:8000/storage/${data.image}`);
-          }
-        }
-      } catch (error) {
-        console.error("Gagal mengambil data:", error);
+        setForm({
+          title: data.title || "",
+          slug: data.slug || "",
+          author: data.author || "",
+          category_id: data.category_id || 0,
+          price: data.price?.toString() || "",
+          // Pastikan diskon dan rating tidak null saat masuk ke state
+          discount: (data.discount ?? 0).toString(), 
+          rating: (data.rating ?? 0).toString(),     
+          stock: data.stock?.toString() || "",
+          image: data.image || "",
+          description: data.description || "",
+          details: typeof data.details === 'object' ? JSON.stringify(data.details, null, 2) : (data.details || "{}")
+        });
+      } catch (err) {
+        alert("Buku tidak ditemukan!");
+        router.push("/admin/products");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
+    fetchData();
+  }, [id, router]);
 
-    fetchProduct();
-  }, [productId]);
-
-  const handleUpdate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const data = new FormData();
-    data.append("_method", "PUT"); 
-    data.append("title", formData.title);
-    data.append("author", formData.author);
-    data.append("category", formData.category);
-    data.append("price", formData.price);
-    data.append("stock", formData.stock);
-    data.append("description", formData.description);
-    if (formData.image) data.append("image", formData.image);
-
     try {
-      const response = await fetch(`http://localhost:8000/api/books/${productId}`, {
-        method: "POST", 
-        body: data,
+      let parsedDetails;
+      try {
+        parsedDetails = JSON.parse(form.details);
+      } catch (err) {
+        alert("Format Detail JSON tidak valid!");
+        return;
+      }
+
+      // PERBAIKAN: Gunakan method PUT langsung untuk JSON
+      const res = await fetch(`http://127.0.0.1:8000/api/books/${id}`, {
+        method: "PUT", 
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json" 
+        },
+        body: JSON.stringify({
+          title: form.title,
+          author: form.author,
+          category_id: Number(form.category_id),
+          price: Number(form.price),
+          // Konversi eksplisit ke number agar Laravel tidak bingung
+          discount: Math.floor(Number(form.discount)) || 0, 
+          rating: parseFloat(form.rating) || 0,     
+          stock: Number(form.stock),
+          image: form.image,
+          description: form.description,
+          details: parsedDetails
+        }),
       });
 
-      if (response.ok) {
+      const result = await res.json();
+
+      if (res.ok) {
         alert("Produk Berhasil Diperbarui!");
         router.push("/admin/products");
+      } else {
+        // Tampilkan pesan error spesifik jika diskon/rating ditolak Laravel
+        const errorMsg = result.errors ? Object.values(result.errors).flat().join("\n") : result.message;
+        alert("Gagal update:\n" + errorMsg);
       }
-    } catch (error) {
-      alert("Gagal memperbarui data!");
+    } catch (err) {
+      alert("Kesalahan koneksi server.");
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center font-bold text-indigo-600">Memuat Data Produk...</div>;
+  if (loading) return <div className="p-10 text-center font-bold text-slate-600 italic">Memuat data buku...</div>;
+
+  const inputClass = "w-full p-4 border border-slate-300 rounded-xl text-slate-900 bg-white outline-none focus:ring-2 focus:ring-blue-500 transition-all font-semibold";
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      <div className="bg-[#0f172a] p-10 pb-40">
-        <button 
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition font-bold"
-        >
-          <HiOutlineArrowLeft /> Batal dan Kembali
-        </button>
-        <h1 className="text-4xl font-black text-white tracking-tight">Edit Produk</h1>
-        <p className="text-slate-400 mt-2 font-medium">
-          ID Produk: <span className="text-indigo-400 font-mono bg-slate-800 px-2 py-1 rounded">#{productId}</span>
-        </p>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-10 -mt-24 mb-20">
-        <form onSubmit={handleUpdate} className="bg-white rounded-[40px] shadow-2xl p-12 border border-slate-100 space-y-8">
-          
-          {/* ================= BAGIAN GAMBAR BUKU ================= */}
-          <div className="flex flex-col md:flex-row gap-8 items-center bg-slate-50 p-8 rounded-[35px] border-2 border-dashed border-slate-200">
-            <div className="w-44 h-60 bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100 flex-shrink-0 flex items-center justify-center">
-              {previewImage ? (
-                <img src={previewImage} alt="Cover Preview" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-slate-300 flex flex-col items-center">
-                  <HiOutlineCloudUpload size={48} />
-                  <p className="text-xs font-bold mt-2">No Image</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex-1 space-y-4">
-              <div>
-                <h3 className="text-lg font-black text-slate-800">Cover Buku</h3>
-                <p className="text-sm text-slate-500 font-medium">Unggah file baru jika ingin mengganti cover saat ini.</p>
-              </div>
-              <input 
-                type="file" 
-                accept="image/*"
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-black file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-all cursor-pointer"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setFormData({ ...formData, image: file });
-                    setPreviewImage(URL.createObjectURL(file)); // Preview instan
-                  }
-                }}
-              />
-            </div>
+    <div className="p-10 bg-slate-50 min-h-screen">
+      <div className="max-w-3xl mx-auto bg-white p-10 rounded-[32px] shadow-md border border-slate-100">
+        <h1 className="text-2xl font-extrabold mb-8 text-slate-800">Edit Produk: <span className="text-blue-600">{form.title}</span></h1>
+        
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Judul Buku</label>
+            <input type="text" value={form.title} className={inputClass} 
+              onChange={(e) => setForm({...form, title: e.target.value})} required />
           </div>
 
-          {/* ================= INPUT DATA LAINNYA ================= */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-700 ml-1">Judul Buku</label>
-              <input 
-                type="text" required
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-bold"
-                value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-700 ml-1">Penulis</label>
-              <input 
-                type="text" required
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-bold"
-                value={formData.author}
-                onChange={(e) => setFormData({...formData, author: e.target.value})}
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Slug (URL)</label>
+            <input type="text" value={form.slug} className="w-full p-4 border border-slate-200 rounded-xl text-slate-400 bg-slate-50 cursor-not-allowed font-medium" readOnly />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-700 ml-1">Kategori</label>
-              <select 
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
-                value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
-              >
-                <option>Novel</option>
-                <option>Komik</option>
-                <option>Pendidikan</option>
-                <option>Self Improvement</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-700 ml-1">Harga (Rp)</label>
-              <input 
-                type="number" required
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
-                value={formData.price}
-                onChange={(e) => setFormData({...formData, price: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-700 ml-1">Stok</label>
-              <input 
-                type="number" required
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
-                value={formData.stock}
-                onChange={(e) => setFormData({...formData, stock: e.target.value})}
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Kategori</label>
+            <select 
+              className={inputClass} 
+              value={form.category_id} 
+              onChange={(e) => setForm({...form, category_id: Number(e.target.value)})}
+            >
+              <option value="">Pilih Kategori</option>
+              {categoriesList.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-black text-slate-700 ml-1">Deskripsi Lengkap Buku</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Penulis</label>
+            <input type="text" value={form.author} className={inputClass} 
+              onChange={(e) => setForm({...form, author: e.target.value})} required />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Harga (Rp)</label>
+            <input type="number" value={form.price} className={inputClass} 
+              onChange={(e) => setForm({...form, price: e.target.value})} required />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Diskon (%)</label>
+            <input type="number" value={form.discount} className={inputClass} 
+              onChange={(e) => setForm({...form, discount: e.target.value})} />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Rating (0 - 5)</label>
+            <input type="number" step="0.1" value={form.rating} className={inputClass} 
+              onChange={(e) => setForm({...form, rating: e.target.value})} />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Stok (Pcs)</label>
+            <input type="number" value={form.stock} className={inputClass} 
+              onChange={(e) => setForm({...form, stock: e.target.value})} required />
+          </div>
+
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Path Gambar</label>
+            <input type="text" value={form.image} className={`${inputClass} font-mono text-sm`} 
+              onChange={(e) => setForm({...form, image: e.target.value})} required />
+          </div>
+
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Deskripsi</label>
+            <textarea value={form.description} className={inputClass} rows={4}
+              onChange={(e) => setForm({...form, description: e.target.value})} />
+          </div>
+
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Detail Buku (JSON Format)</label>
             <textarea 
-              required rows={8}
-              className="w-full p-6 bg-slate-50 border border-slate-200 rounded-[30px] outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all resize-none font-medium text-slate-600"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              value={form.details} 
+              className="w-full p-4 border border-slate-300 rounded-xl text-indigo-700 bg-slate-50 font-mono text-xs outline-none focus:ring-2 focus:ring-blue-500" 
+              rows={5}
+              onChange={(e) => setForm({...form, details: e.target.value})} 
             />
           </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-xl shadow-indigo-100 flex items-center justify-center gap-3"
-          >
-            <HiOutlineCheckCircle className="text-2xl" />
-            Simpan Perubahan Data
-          </button>
+          <div className="flex gap-4 pt-4 md:col-span-2">
+            <button type="button" onClick={() => router.back()} className="flex-1 p-4 bg-slate-100 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all">Batal</button>
+            <button type="submit" className="flex-1 p-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-all">Simpan Perubahan</button>
+          </div>
         </form>
       </div>
     </div>

@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext"; 
-import { useState } from "react";
+import { useState, useMemo } from "react"; // Tambahkan useMemo
 
 type SelectedState = {
   [key: number]: boolean;
 };
 
 export default function CartContent() {
-  const { cart, removeFromCart, setCheckoutItems } = useCart();
+  const { cart, removeFromCart, updateQty, setCheckoutItems } = useCart();
   const { user } = useAuth(); 
   const router = useRouter();
   const [selected, setSelected] = useState<SelectedState>({});
@@ -29,8 +29,18 @@ export default function CartContent() {
     setSelected(next);
   };
 
-  const selectedItems = cart.filter((i) => selected[i.id]);
-  const totalPrice = selectedItems.reduce((t, i) => t + i.price, 0);
+  // --- PERBAIKAN UTAMA DI SINI ---
+  // Gunakan useMemo agar selectedItems selalu sinkron dengan data cart terbaru (termasuk qty-nya)
+  const selectedItems = useMemo(() => {
+    return cart.filter((i) => selected[i.id]);
+  }, [cart, selected]);
+
+  // Hitung total harga berdasarkan qty terbaru dari cart
+  const totalPrice = useMemo(() => {
+    return selectedItems.reduce((t, i) => t + (i.price * (i.qty || 1)), 0);
+  }, [selectedItems]);
+  // ------------------------------
+
   const discount = totalPrice * 0.05;
   const finalPrice = totalPrice - discount;
 
@@ -57,13 +67,9 @@ export default function CartContent() {
 
   return (
     <div className="min-h-screen bg-[#f0f2f5] p-6 text-slate-800 font-sans">
-      
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8">
         
-        {/* SISI KIRI: DAFTAR ITEM */}
         <div className="flex-[2] space-y-4">
-          
-          {/* TOMBOL KEMBALI KE HOME (Gaya Baru) */}
           <button 
             onClick={() => router.push("/")}
             className="mb-2 flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-all group"
@@ -124,9 +130,26 @@ export default function CartContent() {
 
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-slate-800 text-lg truncate mb-1">{item.title}</h3>
-                      <p className="text-indigo-600 font-extrabold text-xl">
-                        Rp {item.price.toLocaleString("id-ID")}
+                      <p className="text-indigo-600 font-extrabold text-xl mb-3">
+                        Rp {(item.price * (item.qty || 1)).toLocaleString("id-ID")}
                       </p>
+
+                      <div className="flex items-center gap-2 border border-slate-200 w-fit rounded-lg p-1">
+                        <button 
+                          onClick={() => updateQty(item.id, (item.qty || 1) - 1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded disabled:opacity-30 font-bold"
+                          disabled={(item.qty || 1) <= 1}
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center font-bold text-slate-700">{item.qty || 1}</span>
+                        <button 
+                          onClick={() => updateQty(item.id, (item.qty || 1) + 1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
 
                     <button 
@@ -144,14 +167,15 @@ export default function CartContent() {
           </div>
         </div>
 
-        {/* SISI KANAN: RINGKASAN BELANJA */}
+        {/* RINGKASAN BELANJA */}
         <div className="flex-1">
           <div className="bg-white p-8 rounded-[30px] shadow-sm sticky top-8 border border-slate-100">
             <h2 className="text-xl font-bold text-slate-800 mb-6 border-b pb-4">Ringkasan Belanja</h2>
             
             <div className="space-y-4">
               <div className="flex justify-between text-slate-600">
-                <span>Total Harga ({selectedItems.length} barang)</span>
+                {/* Menampilkan total item yang terpilih */}
+                <span>Total Harga ({selectedItems.reduce((acc, curr) => acc + (curr.qty || 1), 0)} barang)</span>
                 <span className="text-slate-800 font-semibold">Rp {totalPrice.toLocaleString("id-ID")}</span>
               </div>
               
