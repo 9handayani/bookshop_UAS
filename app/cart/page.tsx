@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext"; 
-import { useState, useMemo } from "react"; // Tambahkan useMemo
+import { useState, useMemo } from "react";
 
 type SelectedState = {
   [key: number]: boolean;
@@ -18,6 +18,17 @@ export default function CartContent() {
 
   const isAuthenticated = !!user; 
 
+  /* ======================
+      HELPER GAMBAR (FIXED)
+  ====================== */
+  const getImageUrl = (path: string) => {
+    if (!path) return "/placeholder-book.jpg";
+    if (path.startsWith('http')) return path;
+    // Mengambil nama file saja untuk menghindari double folder 'books/books/'
+    const fileName = path.split('/').pop(); 
+    return `/books/${fileName}`;
+  };
+
   const isAllSelected =
     cart.length > 0 && cart.every((item) => selected[item.id]);
 
@@ -29,17 +40,13 @@ export default function CartContent() {
     setSelected(next);
   };
 
-  // --- PERBAIKAN UTAMA DI SINI ---
-  // Gunakan useMemo agar selectedItems selalu sinkron dengan data cart terbaru (termasuk qty-nya)
   const selectedItems = useMemo(() => {
     return cart.filter((i) => selected[i.id]);
   }, [cart, selected]);
 
-  // Hitung total harga berdasarkan qty terbaru dari cart
   const totalPrice = useMemo(() => {
     return selectedItems.reduce((t, i) => t + (i.price * (i.qty || 1)), 0);
   }, [selectedItems]);
-  // ------------------------------
 
   const discount = totalPrice * 0.05;
   const finalPrice = totalPrice - discount;
@@ -124,8 +131,14 @@ export default function CartContent() {
                       }
                     />
                     
-                    <div className="w-24 h-32 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0">
-                      <img src={item.img} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={item.title} />
+                    {/* PERBAIKAN BAGIAN GAMBAR */}
+                    <div className="w-24 h-32 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 shadow-inner">
+                      <img 
+                        src={getImageUrl(item.img)} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        alt={item.title} 
+                        onError={(e) => { e.currentTarget.src = "/placeholder-book.jpg" }}
+                      />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -174,7 +187,6 @@ export default function CartContent() {
             
             <div className="space-y-4">
               <div className="flex justify-between text-slate-600">
-                {/* Menampilkan total item yang terpilih */}
                 <span>Total Harga ({selectedItems.reduce((acc, curr) => acc + (curr.qty || 1), 0)} barang)</span>
                 <span className="text-slate-800 font-semibold">Rp {totalPrice.toLocaleString("id-ID")}</span>
               </div>
