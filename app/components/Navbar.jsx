@@ -133,7 +133,7 @@ export default function Navbar() {
                   className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b last:border-none border-blue-100"
                   onClick={() => {
                     // 3. PERBAIKAN: Arahkan ke /produk/ bukan /buku/
-                    router.push(`/produk/${b.slug}`);
+                    router.push(`/book/${b.slug}`);
                     setShowResults(false);
                     setSearch("");
                   }}
