@@ -32,21 +32,27 @@ function HomeContent() {
   const fetchBooks = async (pageNumber: number) => {
     try {
       setLoading(true);
-      let url = `${BACKEND_URL}/books?page=${pageNumber}`;
-      
-      // Gunakan encodeURIComponent agar kategori seperti "Komik/Buku" tidak error
-      if (category) url += `&category=${encodeURIComponent(category)}`; 
-      if (query) url += `&q=${encodeURIComponent(query)}`;
+      // 1. Gunakan URLSearchParams agar query string terbentuk dengan benar
+      const params = new URLSearchParams({
+        page: pageNumber.toString(),
+      });
 
-      const response = await fetch(url);
+      // 2. Kirim kategori dalam huruf kecil (slug) jika backend memintanya
+      if (category) params.append("category", category.toLowerCase());
+      if (query) params.append("q", query);
+
+      const response = await fetch(`${BACKEND_URL}/books?${params.toString()}`, {
+        headers: { "Accept": "application/json" }
+      });
+      
       const result = await response.json();
       
-      // Pastikan mengambil dari result.data jika Laravel menggunakan pagination
-      const dataBuku = result.data || result; 
+      // 3. Tangani struktur data Laravel (result.data.data jika dipaginasi)
+      const dataBuku = result.data?.data || result.data || result;
       setBooks(Array.isArray(dataBuku) ? dataBuku : []);
       
-      setCurrentPage(result.current_page || 1);
-      setTotalPages(result.last_page || 1);
+      setTotalPages(result.data?.last_page || result.last_page || 1);
+      setCurrentPage(result.data?.current_page || result.current_page || 1);
     } catch (error) {
       console.error("Gagal mengambil data buku:", error);
       setBooks([]);
