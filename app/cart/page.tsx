@@ -109,9 +109,9 @@ export default function CartContent() {
               </div>
             ) : (
               cart.map((item) => {
-                {/* --- LOGIKA GAMBAR SEPERTI DI HALAMAN FAVORIT --- */}
+                {/* --- LOGIKA GAMBAR IDENTIK DENGAN HALAMAN FAVORIT --- */}
                 const imageUrl = item.img 
-                  ? `/books/${item.img}` 
+                  ? `/${item.img}` // Mengikuti pola favorit yang langsung memanggil dari root/folder
                   : "/placeholder-book.jpg";
 
                 return (
@@ -126,13 +126,14 @@ export default function CartContent() {
                         }
                       />
                       
-                      {/* Tampilan Gambar Menggunakan Konstanta imageUrl */}
-                      <div className="w-24 h-32 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 shadow-inner">
+                      <div className="w-24 h-32 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
                         <img 
                           src={imageUrl} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                           alt={item.title} 
-                          onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg" }}
+                          onError={(e) => { 
+                            (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; 
+                          }}
                         />
                       </div>
 
