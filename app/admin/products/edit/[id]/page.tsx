@@ -25,7 +25,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   });
   const [loading, setLoading] = useState(true);
 
-  const API_BASE_URL = ${process.env.NEXT_PUBLIC_API_URL};
+  const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
 
   useEffect(() => {
     const fetchData = async () => {

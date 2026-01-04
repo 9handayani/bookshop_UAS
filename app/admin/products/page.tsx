@@ -38,7 +38,7 @@ export default function ManageProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const API_BASE_URL = ${process.env.NEXT_PUBLIC_API_URL};
+  const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
 
   // --- HELPER GAMBAR (DIUBAH KE FOLDER PUBLIC LOKAL) ---
   const getImageUrl = (path: string) => {

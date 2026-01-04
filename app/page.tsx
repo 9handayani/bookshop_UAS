@@ -12,7 +12,7 @@ interface Book {
 }
 
 export default function Home() {
-  const BACKEND_URL = ${process.env.NEXT_PUBLIC_API_URL};
+  const BACKEND_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
   const banners = ["/banner/book1.jpeg", "/banner/book2.jpeg", "/banner/book3.jpeg"];
 
   const [current, setCurrent] = useState(0);
