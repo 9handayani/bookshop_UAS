@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation"; // TAMBAHKAN INI
 import BookCard from "../app/components/BookCard";
 
 interface Book {
@@ -12,6 +13,10 @@ interface Book {
 }
 
 export default function Home() {
+  const searchParams = useSearchParams(); // Ambil parameter dari URL
+  const category = searchParams.get("category"); // Cek jika ada ?category=
+  const query = searchParams.get("q"); // Cek jika ada ?q=
+
   const BACKEND_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
   const banners = ["/banner/book1.jpeg", "/banner/book2.jpeg", "/banner/book3.jpeg"];
 
@@ -19,20 +24,21 @@ export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State untuk Navigasi Halaman (Pagination)
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
 
   const fetchBooks = async (pageNumber: number) => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/books?page=${pageNumber}`);
+      
+      // PERBAIKAN: Masukkan param category dan q ke dalam fetch
+      let url = `${BACKEND_URL}/books?page=${pageNumber}`;
+      if (category) url += `&category=${category}`;
+      if (query) url += `&q=${query}`;
+
+      const response = await fetch(url);
       const result = await response.json();
       
-      // Laravel membungkus data dalam 'data' jika menggunakan paginate()
       const dataBuku = result.data ? result.data : result;
       setBooks(Array.isArray(dataBuku) ? dataBuku : []);
       
@@ -40,14 +46,17 @@ export default function Home() {
       setTotalPages(result.last_page || 1);
     } catch (error) {
       console.error("Gagal mengambil data buku:", error);
+      setBooks([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Re-fetch saat halaman pertama kali dibuka, saat pindah page, 
+  // atau saat kategori/query pencarian berubah
   useEffect(() => {
     fetchBooks(1);
-  }, []);
+  }, [category, query]); 
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -59,39 +68,46 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#EFF4F7] to-[#D4E1E9] px-6 sm:px-10 py-14">
 
-      {/* ========= BAGIAN SELAMAT DATANG (HERO) ========= */}
+      {/* HERO SECTION */}
       <div className="max-w-4xl mx-auto mb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
-          Selamat Datang di <span className="text-[#4c4ddc]">BookStore.id</span>
+          {category ? (
+            <>Kategori: <span className="text-[#4c4ddc] capitalize">{category}</span></>
+          ) : query ? (
+            <>Hasil Cari: <span className="text-[#4c4ddc]">"{query}"</span></>
+          ) : (
+            <>Selamat Datang di <span className="text-[#4c4ddc]">BookStore.id</span></>
+          )}
         </h1>
         <p className="text-lg text-gray-600 mt-4 font-medium italic">
           "Surga bagi para pecinta buku. Temukan dunia baru di setiap halaman."
         </p>
       </div>
 
-      {/* ========= BANNER SLIDER ========= */}
-      <div className="relative w-full flex flex-col items-center mb-16 select-none">
-        <img
-          src={banners[current]}
-          alt="Promo Banner"
-          className="w-full max-w-4xl rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.18)] transition-all duration-700 ease-out hover:scale-[1.01]"
-        />
-        <div className="flex mt-5 gap-2">
-          {banners.map((_, index) => (
-            <div key={index} onClick={() => setCurrent(index)} className={`w-3 h-3 rounded-full cursor-pointer transition-all ${current === index ? "bg-gray-700 scale-125" : "bg-gray-400/40"}`} />
-          ))}
+      {/* BANNER SLIDER (Hanya tampil jika tidak sedang mencari/kategori) */}
+      {!category && !query && (
+        <div className="relative w-full flex flex-col items-center mb-16 select-none">
+          <img
+            src={banners[current]}
+            alt="Promo Banner"
+            className="w-full max-w-4xl rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.18)] transition-all duration-700 ease-out hover:scale-[1.01]"
+          />
+          <div className="flex mt-5 gap-2">
+            {banners.map((_, index) => (
+              <div key={index} onClick={() => setCurrent(index)} className={`w-3 h-3 rounded-full cursor-pointer transition-all ${current === index ? "bg-gray-700 scale-125" : "bg-gray-400/40"}`} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ========= KOLEKSI BUKU ========= */}
+      {/* KOLEKSI BUKU */}
       <div className="text-center text-gray-800 mb-8 border-b border-gray-300 pb-4 max-w-7xl mx-auto flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-bold tracking-wide text-left">Koleksi Buku</h2>
-          <p className="opacity-80 mt-1 text-[15px] text-left">Temukan buku favoritmu di sini</p>
+          <h2 className="text-3xl font-bold tracking-wide text-left">
+            {category ? "Hasil Filter" : "Koleksi Buku"}
+          </h2>
+          <p className="opacity-80 mt-1 text-[15px] text-left">Menampilkan {books.length} buku terbaik</p>
         </div>
-        <span className="bg-[#4c4ddc] text-white px-4 py-1 rounded-full text-sm font-bold shadow-md">
-           {books.length} Buku Tersedia
-        </span>
       </div>
 
       {loading ? (
@@ -103,12 +119,13 @@ export default function Home() {
               books.map((book) => <BookCard key={book.slug} book={book} />)
             ) : (
               <div className="col-span-full text-center py-20 bg-white/50 rounded-3xl border-2 border-dashed border-gray-300">
-                <p className="text-gray-400">Database masih kosong, ayo tambahkan buku baru!</p>
+                <p className="text-gray-400">Maaf, buku tidak ditemukan.</p>
+                <button onClick={() => window.location.href='/'} className="mt-4 text-[#4c4ddc] font-bold underline">Lihat semua buku</button>
               </div>
             )}
           </div>
 
-          {/* ========= TOMBOL PAGINATION ========= */}
+          {/* PAGINATION */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-6 mt-16">
               <button
