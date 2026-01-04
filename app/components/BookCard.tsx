@@ -15,7 +15,7 @@ export default function BookCard({ book }: { book: any }) {
           <img
             // PERBAIKAN UTAMA: Karena folder ada di public frontend, 
             // kita tidak butuh BACKEND_URL. Cukup panggil path folder /books/
-            src={`/books/${book.image}`} 
+            src={`/${book.image}`} 
             alt={book.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => { 
