@@ -4,8 +4,6 @@ import { useRouter } from "next/navigation";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  
-  // SOLUSI UTAMA: Unwrap params agar ID terbaca dengan benar
   const resolvedParams = use(params);
   const id = resolvedParams.id; 
   
@@ -20,7 +18,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     rating: "0",   
     stock: "",
     image: "",
-    description: "",
+    description: "", // State deskripsi sudah ada
     details: "" 
   });
   const [loading, setLoading] = useState(true);
@@ -30,12 +28,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Ambil Kategori
         const catRes = await fetch(`${API_BASE_URL}/categories`);
         const categories = await catRes.json();
         setCategoriesList(Array.isArray(categories) ? categories : (categories.data || []));
 
-        // 2. Ambil Data Buku menggunakan ID
         const res = await fetch(`${API_BASE_URL}/books/${id}`, {
           headers: { "Accept": "application/json" }
         });
@@ -55,7 +51,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           rating: (data.rating ?? 0).toString(),     
           stock: data.stock?.toString() || "",
           image: data.image || "",
-          description: data.description || "",
+          description: data.description || "", // Mengambil deskripsi dari database
           details: typeof data.details === 'object' 
             ? JSON.stringify(data.details, null, 2) 
             : (data.details || "{}")
@@ -69,7 +65,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       }
     };
     fetchData();
-  }, [id, router]);
+  }, [id, router, API_BASE_URL]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +93,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           rating: parseFloat(form.rating) || 0,     
           stock: Number(form.stock),
           image: form.image,
-          description: form.description,
+          description: form.description, // Mengirim deskripsi ke database
           details: parsedDetails
         }),
       });
@@ -131,69 +127,61 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         </h1>
         
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ... (Input Judul, Kategori, Penulis, Harga, Diskon, Rating, Stok tetap sama) ... */}
           <div className="flex flex-col gap-2 md:col-span-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Judul Buku</label>
-            <input type="text" value={form.title} className={inputClass} 
-              onChange={(e) => setForm({...form, title: e.target.value})} required />
+            <input type="text" value={form.title} className={inputClass} onChange={(e) => setForm({...form, title: e.target.value})} required />
           </div>
 
+          {/* ... (Kategori & Penulis) ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Kategori</label>
-            <select 
-              className={inputClass} 
-              value={form.category_id} 
-              onChange={(e) => setForm({...form, category_id: Number(e.target.value)})}
-              required
-            >
+            <select className={inputClass} value={form.category_id} onChange={(e) => setForm({...form, category_id: Number(e.target.value)})} required>
               <option value="">Pilih Kategori</option>
               {categoriesList.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </div>
-
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Penulis</label>
-            <input type="text" value={form.author} className={inputClass} 
-              onChange={(e) => setForm({...form, author: e.target.value})} required />
+            <input type="text" value={form.author} className={inputClass} onChange={(e) => setForm({...form, author: e.target.value})} required />
           </div>
 
+          {/* ... (Harga & Diskon) ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Harga (Rp)</label>
-            <input type="number" value={form.price} className={inputClass} 
-              onChange={(e) => setForm({...form, price: e.target.value})} required />
+            <input type="number" value={form.price} className={inputClass} onChange={(e) => setForm({...form, price: e.target.value})} required />
           </div>
-
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Diskon (%)</label>
-            <input type="number" value={form.discount} className={inputClass} 
-              onChange={(e) => setForm({...form, discount: e.target.value})} />
+            <input type="number" value={form.discount} className={inputClass} onChange={(e) => setForm({...form, discount: e.target.value})} />
           </div>
 
-          {/* INPUT RATING DITAMBAHKAN DISINI */}
+          {/* ... (Rating & Stok) ... */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Rating (0 - 5)</label>
-            <input 
-              type="number" 
-              step="0.1" 
-              min="0" 
-              max="5" 
-              value={form.rating} 
-              className={inputClass} 
-              onChange={(e) => setForm({...form, rating: e.target.value})} 
-            />
+            <input type="number" step="0.1" min="0" max="5" value={form.rating} className={inputClass} onChange={(e) => setForm({...form, rating: e.target.value})} />
           </div>
-
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Stok (Pcs)</label>
-            <input type="number" value={form.stock} className={inputClass} 
-              onChange={(e) => setForm({...form, stock: e.target.value})} required />
+            <input type="number" value={form.stock} className={inputClass} onChange={(e) => setForm({...form, stock: e.target.value})} required />
           </div>
 
           <div className="flex flex-col gap-2 md:col-span-2">
             <label className="text-sm font-bold text-slate-700 ml-1">Path Gambar</label>
-            <input type="text" value={form.image} className={`${inputClass} font-mono text-sm text-blue-600`} 
-              onChange={(e) => setForm({...form, image: e.target.value})} required />
+            <input type="text" value={form.image} className={`${inputClass} font-mono text-sm text-blue-600`} onChange={(e) => setForm({...form, image: e.target.value})} required />
+          </div>
+
+          {/* --- BAGIAN BARU: DESKRIPSI BUKU --- */}
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <label className="text-sm font-bold text-slate-700 ml-1">Deskripsi Buku</label>
+            <textarea 
+              value={form.description} 
+              className="w-full p-4 border border-slate-300 rounded-xl text-slate-800 bg-white outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium min-h-[150px]" 
+              placeholder="Masukkan sinopsis atau deskripsi buku yang panjang di sini..."
+              onChange={(e) => setForm({...form, description: e.target.value})} 
+            />
           </div>
 
           <div className="flex flex-col gap-2 md:col-span-2">
