@@ -24,7 +24,7 @@ export default function AdminDashboard() {
     setIsClient(true);
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/orders", {
+        const response = await fetch("process.env.NEXT_PUBLIC_API_URL/api/orders", {
           headers: { "Accept": "application/json" }
         });
         

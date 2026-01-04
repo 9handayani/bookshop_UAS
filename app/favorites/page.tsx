@@ -8,7 +8,7 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
 
-  const API_BASE_URL = "http://127.0.0.1:8000";
+  const API_BASE_URL = "process.env.NEXT_PUBLIC_API_URL";
 
   useEffect(() => {
     setIsMounted(true);

@@ -72,7 +72,7 @@ export default function CheckoutPage() {
       };
 
       // URL diperbaiki menjadi /api/orders (Jamak)
-      const response = await fetch("http://127.0.0.1:8000/api/orders", {
+      const response = await fetch("process.env.NEXT_PUBLIC_API_URL/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

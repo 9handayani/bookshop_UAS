@@ -22,7 +22,7 @@ export default function DataPembelian() {
     try {
       setLoading(true);
       // Menggunakan /api/orders sesuai hasil tes browser
-      const response = await fetch("http://127.0.0.1:8000/api/orders", {
+      const response = await fetch("process.env.NEXT_PUBLIC_API_URL/api/orders", {
         headers: {
           "Accept": "application/json", // Memaksa Laravel mengirim JSON bukan HTML
         },
@@ -50,7 +50,7 @@ export default function DataPembelian() {
     const newStatus = currentStatus === "pending" ? "paid" : "pending";
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/orders/${id}/status`, {
+      const response = await fetch(`process.env.NEXT_PUBLIC_API_URL/api/orders/${id}/status`, {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",

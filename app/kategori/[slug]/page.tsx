@@ -23,7 +23,7 @@ export default function KategoriPage({ params }: PageProps) {
   const { slug } = use(params);
   const router = useRouter();
   
-  const API_BASE_URL = "http://127.0.0.1:8000";
+  const API_BASE_URL = "process.env.NEXT_PUBLIC_API_URL";
 
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
