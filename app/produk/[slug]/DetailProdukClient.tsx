@@ -26,7 +26,7 @@ export default function DetailProdukClient({ initialBook }: { initialBook: any }
               <img  
                 src={book.image?.startsWith('http') 
                   ? book.image 
-                  : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/storage/${book.image}` 
+                  : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/${book.image}` 
                 }
                 className="w-full rounded-2xl object-contain" 
                 alt={book.title}
