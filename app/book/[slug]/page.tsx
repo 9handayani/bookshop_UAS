@@ -120,18 +120,19 @@ export default function BookDetailClient() {
 
       <div className="max-w-5xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
-          {/* AREA GAMBAR */}
-        <div className="relative aspect-square bg-slate-50 overflow-hidden">
-          <img
-            // Gunakan template literal yang memastikan hanya ada satu garis miring di depan
-            src={book.image.startsWith('/') ? book.image : `/${book.image}`} 
-            alt={book.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => { 
-              (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; 
-            }}
-          />
-        </div>
+          {/* AREA GAMBAR - Berikan col-span agar ukurannya besar di desktop */}
+          <div className="md:col-span-5">
+            <div className="sticky top-24 aspect-[3/4] bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 shadow-sm">
+              <img
+                src={book.image.startsWith('/') ? book.image : `/${book.image}`} 
+                alt={book.title}
+                className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                onError={(e) => { 
+                  (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; 
+                }}
+              />
+            </div>
+          </div>
           
           {/* BAGIAN INFO */}
           <div className="md:col-span-7 flex flex-col">
