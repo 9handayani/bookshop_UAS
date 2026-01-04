@@ -137,7 +137,7 @@ export default function FavoritesPage() {
                       alt={book.title} 
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/books/book1.jpg";
+                        (e.target as HTMLImageElement).src = "/placeholder-book.jpg";
                       }}
                     />
                     {discount > 0 && (
