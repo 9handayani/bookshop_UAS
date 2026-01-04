@@ -126,7 +126,7 @@ export default function FavoritesPage() {
                */
               const imageUrl = book.image 
                 ? `/books/${book.image}` 
-                : "/books/book1.jpg"; // Fallback ke salah satu gambar lokalmu
+                : "/placeholder-book.jpg"; // Fallback ke salah satu gambar lokalmu
 
               return (
                 <div key={book.slug} className="group flex flex-col h-full bg-white rounded-[1.5rem] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 overflow-hidden">
