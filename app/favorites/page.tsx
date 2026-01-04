@@ -119,14 +119,11 @@ export default function FavoritesPage() {
               const discount = Number(book.discount) || 0;
               const finalPrice = Math.floor(price - (price * discount) / 100);
 
-              /**
-               * PERBAIKAN UTAMA:
-               * Karena gambar ada di folder 'public/books' proyek Frontend, 
-               * kita panggil langsung dari root path "/"
-               */
-              const imageUrl = book.image 
-                ? `/${book.image}` 
-                : "/placeholder-book.jpg"; // Fallback ke salah satu gambar lokalmu
+              // ✅ PERBAIKAN LOGIKA GAMBAR:
+              // Gunakan 'img' sesuai CartContext kamu.
+              // Tambahkan path '/books/' secara eksplisit.
+              const fileName = (book.img || book.image || "").split('/').pop();
+              const imageUrl = fileName ? `/books/${fileName}` : "/placeholder-book.jpg";
 
               return (
                 <div key={book.slug} className="group flex flex-col h-full bg-white rounded-[1.5rem] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 overflow-hidden">
