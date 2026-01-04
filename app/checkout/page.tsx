@@ -209,14 +209,15 @@ export default function CheckoutPage() {
                   checkoutItems.map((item) => (
                     <div key={item.id} className="flex gap-4 items-center">
                       {/* PERBAIKAN LOGIKA GAMBAR DISINI */}
-                      <img 
-                        src={item.img && item.img.startsWith('/') ? item.img : `/${item.img}`} 
-                        className="w-14 h-14 object-cover rounded-xl bg-slate-100" 
-                        alt={item.title} 
-                        onError={(e) => { 
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null; // Mencegah looping error
-                          target.src = "/placeholder-book.jpg"; 
+                    <img 
+                    src={item.img && item.img.startsWith('/') ? item.img : `/${item.img}`} 
+                    className="w-14 h-14 object-cover rounded-xl bg-slate-100" 
+                    alt={item.title} 
+                    onError={(e) => { 
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== "/placeholder-book.jpg") {
+                        target.src = "/placeholder-book.jpg";
+                      }
                         }} 
 />
                       <div className="flex-1 min-w-0">
