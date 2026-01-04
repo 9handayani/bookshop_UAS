@@ -20,7 +20,7 @@ export default function BookCard({ book }: { book: any }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => { 
               // Jika file tidak ditemukan, gunakan placeholder agar tidak putih polos
-              (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x300?text=Gambar+Tidak+Ada"; 
+              (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; 
             }}
           />
         </div>

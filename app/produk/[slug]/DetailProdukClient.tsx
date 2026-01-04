@@ -30,7 +30,7 @@ export default function DetailProdukClient({ initialBook }: { initialBook: any }
 }
                 className="w-full rounded-2xl object-contain" 
                 alt={book.title}
-                onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/400x600?text=No+Image")}
+                onError={(e) => (e.currentTarget.src = "/placeholder-book.jpg")}
               />
             </div>
           </div>

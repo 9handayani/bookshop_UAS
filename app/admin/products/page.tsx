@@ -40,18 +40,15 @@ export default function ManageProducts() {
 
   const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
 
-  // --- HELPER GAMBAR (DIUBAH KE FOLDER PUBLIC LOKAL) ---
   const getImageUrl = (path: string) => {
-    if (!path) return "https://via.placeholder.com/150?text=No+Image";
+    if (!path) return "/placeholder-book.jpg"; // Pastikan ada file ini di folder public
     
-    // Jika path sudah berupa URL internet (http), gunakan langsung
     if (path.startsWith('http')) return path;
     
-    // Ambil nama filenya saja (misal dari "books/book1.jpg" menjadi "book1.jpg")
+    // Ambil nama filenya saja (misal "books/mashle.jpg" -> "mashle.jpg")
     const fileName = path.split('/').pop(); 
     
-    // Karena gambar ada di folder public/books milik Next.js (frontend), 
-    // kita gunakan path relatif "/" yang otomatis membaca folder public.
+    // Arahkan ke folder public/books/
     return `/books/${fileName}`;
   };
 
@@ -191,7 +188,7 @@ export default function ManageProducts() {
                               className="w-12 h-16 object-cover rounded-lg shadow-sm bg-slate-100 flex-shrink-0"
                               onError={(e) => {
                                 e.currentTarget.onerror = null; 
-                                e.currentTarget.src = "https://via.placeholder.com/150?text=Error";
+                                e.currentTarget.src = "/placeholder-book.jpg";
                               }}
                             />
                             <div className="overflow-hidden">
