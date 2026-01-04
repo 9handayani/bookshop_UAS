@@ -23,8 +23,8 @@ export default function DetailProdukClient({ initialBook }: { initialBook: any }
           {/* SISI KIRI: GAMBAR */}
           <div className="md:col-span-5">
             <div className="rounded-3xl border border-slate-100 p-6 shadow-xl sticky top-10 bg-white">
-              <img 
-                src={book.image? `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/storage/books/${book.image}`: "/placeholder-book.jpg"} 
+              <img  
+                src={book.image ? `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/storage/${book.image}` : "/placeholder-book.jpg"}
                 className="w-full rounded-2xl object-contain" 
                 alt={book.title}
                 onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/400x600?text=No+Image")}
