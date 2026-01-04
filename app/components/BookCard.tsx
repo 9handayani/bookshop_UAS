@@ -13,13 +13,11 @@ export default function BookCard({ book }: { book: any }) {
         {/* AREA GAMBAR */}
         <div className="relative aspect-square bg-slate-50 overflow-hidden">
           <img
-            // PERBAIKAN UTAMA: Karena folder ada di public frontend, 
-            // kita tidak butuh BACKEND_URL. Cukup panggil path folder /books/
-            src={`/${book.image}`} 
+            // Gunakan template literal yang memastikan hanya ada satu garis miring di depan
+            src={book.image.startsWith('/') ? book.image : `/${book.image}`} 
             alt={book.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => { 
-              // Jika file tidak ditemukan, gunakan placeholder agar tidak putih polos
               (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; 
             }}
           />
