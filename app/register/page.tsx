@@ -25,7 +25,6 @@ export default function RegisterPage() {
       return;
     }
 
-    // ✅ Sesuaikan dengan Note: Minimal 8 karakter
     if (password.length < 8) {
       alert("Password minimal 8 karakter");
       return;
@@ -131,20 +130,20 @@ export default function RegisterPage() {
               </button>
             </div>
 
-            {/* ✅ Bagian Note yang sudah diperbaiki sesuai Screenshot (927) */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-1">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-slate-500">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-indigo-500 font-bold">✓</span>
-                  <span>Min. 8 karakter</span>
+            {/* ✅ Bagian Note: Teks Lebih Tebal (font-semibold) & Kontras (text-slate-600) */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-1">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px] text-slate-600">
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-600 font-black text-sm">✓</span>
+                  <span className="font-semibold">Min. 8 karakter</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-indigo-500 font-bold">✓</span>
-                  <span>Huruf besar & kecil</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-600 font-black text-sm">✓</span>
+                  <span className="font-semibold">Huruf besar & kecil</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-indigo-500 font-bold">✓</span>
-                  <span>Angka & simbol</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-indigo-600 font-black text-sm">✓</span>
+                  <span className="font-semibold">Angka & simbol</span>
                 </div>
               </div>
             </div>

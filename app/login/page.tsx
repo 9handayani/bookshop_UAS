@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FaGoogle, FaGithub, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 function LoginContent() {
   const { login, user, loading: authLoading } = useAuth();
@@ -16,12 +16,6 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // --- FUNGSI BARU UNTUK SOCIAL LOGIN ---
-  const handleSocialLogin = (provider: string) => {
-    // Arahkan browser langsung ke endpoint redirect Laravel Anda
-    window.location.href = `http://127.0.0.1:8000/auth/${provider}/redirect`;
-  };
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -61,26 +55,6 @@ function LoginContent() {
             Masuk
           </h2>
 
-          <div className="flex justify-center gap-4 mb-8">
-            {/* TOMBOL GOOGLE */}
-            <button 
-              type="button" 
-              onClick={() => handleSocialLogin('google')} // Tambahkan ini
-              className="p-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600 flex items-center justify-center"
-            >
-              <FaGoogle size={22} className="pointer-events-none" />
-            </button>
-            
-            {/* TOMBOL GITHUB */}
-            <button 
-              type="button" 
-              onClick={() => handleSocialLogin('github')} // Tambahkan ini
-              className="p-3 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm text-slate-600 flex items-center justify-center"
-            >
-              <FaGithub size={22} className="pointer-events-none" />
-            </button>
-          </div>
-
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <input
               type="email"
@@ -118,6 +92,12 @@ function LoginContent() {
               {submitting ? "Sedang Masuk..." : "Masuk"}
             </button>
           </form>
+          
+          <div className="mt-8 text-center md:hidden">
+             <p className="text-slate-500 text-sm">
+                Belum punya akun? <a href="/register" className="text-indigo-600 font-bold">Daftar sekarang</a>
+             </p>
+          </div>
         </div>
 
         {/* SISI KANAN: PANEL REGISTER */}

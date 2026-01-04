@@ -15,7 +15,7 @@ export default function Footer() {
         {/* Logo & Deskripsi */}
         <div>
           <h2 className="text-lg font-semibold mb-3 text-indigo-600">
-            BookStore
+            BookStore.id
           </h2>
           <p className="text-gray-600 leading-relaxed">
             Toko buku online sederhana dengan desain UI berbeda.

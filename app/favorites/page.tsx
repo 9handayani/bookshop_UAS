@@ -1,16 +1,24 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Home, ChevronRight, Trash2 } from "lucide-react";
+import { Home, ChevronRight, Trash2, BookOpen, Loader2 } from "lucide-react";
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const fetchFavoriteBooks = async () => {
+  const API_BASE_URL = "http://127.0.0.1:8000";
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const fetchFavoriteBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const savedSlugs: string[] = JSON.parse(localStorage.getItem("favorites") || "[]");
+      const savedData = localStorage.getItem("favorites");
+      const savedSlugs: string[] = savedData ? JSON.parse(savedData) : [];
       
       if (savedSlugs.length === 0) {
         setFavorites([]);
@@ -18,15 +26,17 @@ export default function FavoritesPage() {
         return;
       }
 
-      const response = await fetch("http://127.0.0.1:8000/api/books");
+      const response = await fetch(`${API_BASE_URL}/api/books`, {
+        headers: { "Accept": "application/json" }
+      });
+      
+      if (!response.ok) throw new Error("Gagal mengambil data");
+      
       const result = await response.json();
-
-      // Memastikan mengambil data dari array atau property .data (Laravel)
       const allBooks = Array.isArray(result) ? result : (result.data || []);
 
-      // Filter buku yang slug-nya ada di localStorage
       const favBooks = allBooks.filter((b: any) => 
-        savedSlugs.some(slug => String(slug) === String(b.slug))
+        savedSlugs.includes(String(b.slug))
       );
       
       setFavorites(favBooks);
@@ -35,33 +45,50 @@ export default function FavoritesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
 
   useEffect(() => {
-    fetchFavoriteBooks();
-    
-    // Listener agar data update otomatis jika tab lain mengubah favorit
-    window.addEventListener("storage", fetchFavoriteBooks);
-    return () => window.removeEventListener("storage", fetchFavoriteBooks);
-  }, []);
+    if (isMounted) {
+      fetchFavoriteBooks();
+      
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === "favorites") fetchFavoriteBooks();
+      };
+
+      window.addEventListener("storage", handleStorageChange);
+      return () => window.removeEventListener("storage", handleStorageChange);
+    }
+  }, [isMounted, fetchFavoriteBooks]);
 
   const removeFavorite = (e: React.MouseEvent, slug: string) => {
-    e.preventDefault(); // Mencegah navigasi Link saat klik tombol hapus
-    const saved: string[] = JSON.parse(localStorage.getItem("favorites") || "[]");
+    e.preventDefault();
+    e.stopPropagation();
+
+    const savedData = localStorage.getItem("favorites");
+    const saved: string[] = savedData ? JSON.parse(savedData) : [];
     const updated = saved.filter((s) => String(s) !== String(slug));
-    localStorage.setItem("favorites", JSON.stringify(updated));
     
-    // Update UI secara instan
+    localStorage.setItem("favorites", JSON.stringify(updated));
     setFavorites(prev => prev.filter(b => String(b.slug) !== String(slug)));
+    
     window.dispatchEvent(new Event("storage"));
   };
 
-  if (loading) return <div className="p-20 text-center font-bold text-indigo-600 italic">Memuat koleksi favorit...</div>;
+  if (!isMounted) return null;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+        <p className="text-slate-500 font-medium">Menyusun koleksi favoritmu...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20 pt-28">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Breadcrumbs */}
+        
         <nav className="flex items-center gap-2 text-sm mb-8 bg-white w-fit px-4 py-2 rounded-xl shadow-sm border border-slate-100">
           <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors">
             <Home size={16} />
@@ -78,10 +105,10 @@ export default function FavoritesPage() {
         {favorites.length === 0 ? (
           <div className="bg-white rounded-[2.5rem] p-20 text-center shadow-sm border border-slate-100">
             <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Trash2 size={32} className="text-slate-300" />
+              <BookOpen size={32} className="text-slate-300" />
             </div>
-            <p className="text-slate-500 text-lg mb-6">Belum ada buku yang kamu simpan.</p>
-            <Link href="/" className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+            <p className="text-slate-500 text-lg mb-6 font-medium">Belum ada buku yang kamu simpan.</p>
+            <Link href="/" className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95">
               Cari Buku Sekarang
             </Link>
           </div>
@@ -89,44 +116,58 @@ export default function FavoritesPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {favorites.map((book) => {
               const price = Number(book.price) || 0;
-              const finalPrice = Math.floor(price - (price * (book.discount || 0)) / 100);
+              const discount = Number(book.discount) || 0;
+              const finalPrice = Math.floor(price - (price * discount) / 100);
+
+              /**
+               * PERBAIKAN UTAMA:
+               * Karena gambar ada di folder 'public/books' proyek Frontend, 
+               * kita panggil langsung dari root path "/"
+               */
+              const imageUrl = book.image 
+                ? `/books/${book.image}` 
+                : "/books/book1.jpg"; // Fallback ke salah satu gambar lokalmu
 
               return (
-                <div key={book.slug} className="group relative">
-                  <div className="bg-white rounded-[1.5rem] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 flex flex-col h-full overflow-hidden">
-                    {/* Gambar */}
-                    <Link href={`/book/${book.slug}`} className="relative aspect-[3/4] overflow-hidden bg-slate-100">
-                      <img 
-                        src={book.image || "/placeholder-book.jpg"} 
-                        alt={book.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition duration-500" 
-                      />
-                      {book.discount > 0 && (
-                        <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md">
-                          -{book.discount}%
-                        </div>
-                      )}
-                    </Link>
+                <div key={book.slug} className="group flex flex-col h-full bg-white rounded-[1.5rem] shadow-sm hover:shadow-xl border border-slate-100 transition-all duration-300 overflow-hidden">
+                  
+                  <Link href={`/book/${book.slug}`} className="relative aspect-[3/4] overflow-hidden bg-slate-100 block">
+                    <img 
+                      src={imageUrl} 
+                      alt={book.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/books/book1.jpg";
+                      }}
+                    />
+                    {discount > 0 && (
+                      <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-md z-10">
+                        -{discount}%
+                      </div>
+                    )}
+                  </Link>
 
-                    {/* Info */}
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h3 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2 mb-2 group-hover:text-indigo-600 transition-colors">
-                        {book.title}
-                      </h3>
-                      <p className="text-slate-400 text-xs mb-3 italic">oleh {book.author}</p>
-                      
-                      <div className="mt-auto flex items-center justify-between">
-                        <p className="text-indigo-600 font-black text-sm">
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2 mb-1 group-hover:text-indigo-600 transition-colors">
+                      {book.title}
+                    </h3>
+                    <p className="text-slate-400 text-[11px] mb-3 italic">oleh {book.author || "Anonim"}</p>
+                    
+                    <div className="mt-auto flex items-center justify-between gap-2">
+                      <div className="flex flex-col">
+                        {discount > 0 && (
+                          <span className="text-[10px] text-slate-400 line-through">Rp {price.toLocaleString("id-ID")}</span>
+                        )}
+                        <p className="text-indigo-600 font-black text-sm whitespace-nowrap">
                           Rp {finalPrice.toLocaleString("id-ID")}
                         </p>
-                        <button 
-                          onClick={(e) => removeFavorite(e, book.slug)}
-                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                          title="Hapus dari favorit"
-                        >
-                          <Trash2 size={18} />
-                        </button>
                       </div>
+                      <button 
+                        onClick={(e) => removeFavorite(e, book.slug)}
+                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 </div>

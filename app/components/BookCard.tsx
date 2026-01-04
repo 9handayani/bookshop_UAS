@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 export default function BookCard({ book }: { book: any }) {
+  // Hitung harga
   const originalPrice = Number(book.price) || 0;
   const finalPrice = Math.floor(originalPrice - (originalPrice * (book.discount || 0)) / 100);
 
@@ -9,30 +10,33 @@ export default function BookCard({ book }: { book: any }) {
     <Link href={`/book/${book.slug}`} className="group h-full">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-md transition-all">
         
+        {/* AREA GAMBAR */}
         <div className="relative aspect-square bg-slate-50 overflow-hidden">
           <img
-            src={book.image || "/placeholder-book.jpg"}
+            // PERBAIKAN UTAMA: Karena folder ada di public frontend, 
+            // kita tidak butuh BACKEND_URL. Cukup panggil path folder /books/
+            src={`/books/${book.image}`} 
             alt={book.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; }}
+            onError={(e) => { 
+              // Jika file tidak ditemukan, gunakan placeholder agar tidak putih polos
+              (e.target as HTMLImageElement).src = "https://via.placeholder.com/300x300?text=Gambar+Tidak+Ada"; 
+            }}
           />
         </div>
 
-        {/* Tambahkan flex-grow di sini agar area p-4 mengambil sisa ruang */}
+        {/* AREA DATA (Judul, Penulis, Harga) */}
         <div className="p-4 flex flex-col flex-grow">
-          {/* Judul: Diberi min-h agar judul 1 baris punya tinggi sama dengan 2 baris */}
           <h3 className="font-bold text-slate-800 text-sm line-clamp-2 leading-snug min-h-[2.5rem]">
             {book.title}
           </h3>
           <p className="text-[11px] text-slate-400 mb-2">{book.author}</p>
 
-          {/* mt-auto akan mendorong div harga ini ke posisi paling bawah kartu */}
           <div className="mt-auto">
             <p className="text-green-600 font-bold text-sm">
               Rp {finalPrice.toLocaleString("id-ID")}
             </p>
             
-            {/* Beri tinggi tetap pada area diskon agar kartu tanpa diskon tetap sejajar */}
             <div className="min-h-[35px] flex flex-col justify-end">
               {book.discount > 0 && (
                 <div className="flex flex-col gap-0.5 mt-1">

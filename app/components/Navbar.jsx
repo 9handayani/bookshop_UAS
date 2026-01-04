@@ -84,7 +84,7 @@ export default function Navbar() {
           className="text-xl font-bold text-blue-700 cursor-pointer select-none"
           onClick={() => router.push("/")}
         >
-          BookStore
+          BookStore.id
         </h1>
 
         <div
