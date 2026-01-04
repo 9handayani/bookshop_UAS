@@ -109,9 +109,15 @@ export default function CartContent() {
               </div>
             ) : (
               cart.map((item) => {
-                {/* --- LOGIKA GAMBAR IDENTIK DENGAN HALAMAN FAVORIT --- */}
-                const imageUrl = item.img 
-                  ? `/${item.img}` // Mengikuti pola favorit yang langsung memanggil dari root/folder
+              /* ======================
+                  LOGIKA PEMBERSIH PATH (FIXED)
+                ====================== */
+                // Jika item.img sudah mengandung 'books/', kita ambil nama filenya saja
+                const fileName = item.img ? item.img.split('/').pop() : "";
+                
+                // Sekarang kita gabungkan secara manual agar hasilnya pasti /books/namafile.jpeg
+                const imageUrl = fileName 
+                  ? `/books/${fileName}` 
                   : "/placeholder-book.jpg";
 
                 return (
