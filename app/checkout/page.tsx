@@ -30,24 +30,23 @@ export default function CheckoutPage() {
   if (loading || !user) return null;
 
   /* ======================
-      CALCULATIONS (FIXED)
+      CALCULATIONS
   ====================== */
   const subtotal = checkoutItems.reduce((t, i) => t + i.price, 0);
-  const shipping = subtotal > 0 ? 15000 : 0; // Ongkir 0 jika keranjang kosong
+  const shipping = subtotal > 0 ? 15000 : 0; 
   const discount = subtotal * 0.05;
   const total = subtotal + shipping - discount;
 
   const banks = ["BCA", "Mandiri", "BNI", "BRI"];
   const wallets = ["Gopay", "OVO", "Dana", "ShopeePay"];
 
-  // Validasi tombol: Harus isi form, pilih bayar, DAN keranjang tidak boleh kosong
   const isFormValid = 
     form.name && form.phone && form.email && form.address && 
     paymentMethod && (paymentMethod === "cod" || selectedSubMethod) &&
     checkoutItems.length > 0;
 
   /* ======================
-      FUNGSI PEMBAYARAN (FULL REPAIRED)
+      FUNGSI PEMBAYARAN
   ===================== */
   const handlePayment = async () => {
     if (checkoutItems.length === 0) {
@@ -61,17 +60,15 @@ export default function CheckoutPage() {
       const payload = {
         user_id: user.id, 
         customer_name: form.name,
-        phone_number: form.phone, // Pastikan sesuai nama kolom di migration Laravel
+        phone_number: form.phone,
         address: form.address,
-        // Menggabungkan semua judul buku menjadi satu string
         book_title: checkoutItems.map(item => item.title).join(", "),
-        total_amount: Math.round(total), // Dibulatkan agar divalidasi sebagai 'numeric' oleh Laravel
+        total_amount: Math.round(total),
         payment_method: paymentMethod === "cod" 
           ? "COD" 
           : `${paymentMethod.toUpperCase()} (${selectedSubMethod})`,
       };
 
-      // URL diperbaiki menjadi /api/orders (Jamak)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
         method: "POST",
         headers: {
@@ -88,7 +85,6 @@ export default function CheckoutPage() {
         if (clearCart) clearCart();
         router.push("/"); 
       } else {
-        // Menampilkan pesan error spesifik jika validasi 422 gagal
         console.error("Validation Errors:", result.errors);
         alert(`Gagal: ${result.message || "Periksa kembali data anda"}`);
       }
@@ -212,7 +208,13 @@ export default function CheckoutPage() {
                 {checkoutItems.length > 0 ? (
                   checkoutItems.map((item) => (
                     <div key={item.id} className="flex gap-4 items-center">
-                      <img src={item.img} className="w-14 h-14 object-cover rounded-xl bg-slate-100" alt={item.title} />
+                      {/* PERBAIKAN LOGIKA GAMBAR DISINI */}
+                      <img 
+                        src={item.img.startsWith('/') ? item.img : `/${item.img}`} 
+                        className="w-14 h-14 object-cover rounded-xl bg-slate-100" 
+                        alt={item.title} 
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; }}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm truncate">{item.title}</p>
                         <p className="text-indigo-600 font-bold text-xs">Rp {item.price.toLocaleString("id-ID")}</p>
