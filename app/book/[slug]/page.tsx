@@ -120,17 +120,18 @@ export default function BookDetailClient() {
 
       <div className="max-w-5xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
-          {/* BAGIAN GAMBAR */}
-          <div className="md:col-span-5">
-            <div className="rounded-2xl border border-slate-100 p-6 shadow-sm sticky top-10 bg-white flex justify-center">
-              <img 
-                src={`/${book.image}`} 
-                className="w-full max-w-[320px] rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" 
-                alt={book.title}
-                onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; }}
-              />
-            </div>
-          </div>
+          {/* AREA GAMBAR */}
+        <div className="relative aspect-square bg-slate-50 overflow-hidden">
+          <img
+            // Gunakan template literal yang memastikan hanya ada satu garis miring di depan
+            src={book.image.startsWith('/') ? book.image : `/${book.image}`} 
+            alt={book.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            onError={(e) => { 
+              (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; 
+            }}
+          />
+        </div>
           
           {/* BAGIAN INFO */}
           <div className="md:col-span-7 flex flex-col">
