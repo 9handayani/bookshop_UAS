@@ -125,7 +125,7 @@ export default function FavoritesPage() {
                * kita panggil langsung dari root path "/"
                */
               const imageUrl = book.image 
-                ? `/books/${book.image}` 
+                ? `/${book.image}` 
                 : "/placeholder-book.jpg"; // Fallback ke salah satu gambar lokalmu
 
               return (
