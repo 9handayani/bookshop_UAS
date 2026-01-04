@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "next/navigation"; // TAMBAHKAN INI
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import BookCard from "../app/components/BookCard";
 
 interface Book {
@@ -12,10 +12,11 @@ interface Book {
   slug: string;
 }
 
-export default function Home() {
-  const searchParams = useSearchParams(); // Ambil parameter dari URL
-  const category = searchParams.get("category"); // Cek jika ada ?category=
-  const query = searchParams.get("q"); // Cek jika ada ?q=
+// 1. Buat Komponen Internal yang berisi logika utama
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
+  const query = searchParams.get("q");
 
   const BACKEND_URL = `${process.env.NEXT_PUBLIC_API_URL}`;
   const banners = ["/banner/book1.jpeg", "/banner/book2.jpeg", "/banner/book3.jpeg"];
@@ -30,8 +31,6 @@ export default function Home() {
   const fetchBooks = async (pageNumber: number) => {
     try {
       setLoading(true);
-      
-      // PERBAIKAN: Masukkan param category dan q ke dalam fetch
       let url = `${BACKEND_URL}/books?page=${pageNumber}`;
       if (category) url += `&category=${category}`;
       if (query) url += `&q=${query}`;
@@ -52,8 +51,6 @@ export default function Home() {
     }
   };
 
-  // Re-fetch saat halaman pertama kali dibuka, saat pindah page, 
-  // atau saat kategori/query pencarian berubah
   useEffect(() => {
     fetchBooks(1);
   }, [category, query]); 
@@ -67,7 +64,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#EFF4F7] to-[#D4E1E9] px-6 sm:px-10 py-14">
-
       {/* HERO SECTION */}
       <div className="max-w-4xl mx-auto mb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
@@ -84,7 +80,7 @@ export default function Home() {
         </p>
       </div>
 
-      {/* BANNER SLIDER (Hanya tampil jika tidak sedang mencari/kategori) */}
+      {/* BANNER SLIDER */}
       {!category && !query && (
         <div className="relative w-full flex flex-col items-center mb-16 select-none">
           <img
@@ -146,5 +142,14 @@ export default function Home() {
         </div>
       )}
     </div>
+  );
+}
+
+// 2. Fungsi Ekspor Utama dengan Suspense Boundary
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Memuat...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
