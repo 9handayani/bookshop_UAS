@@ -34,7 +34,7 @@ function SearchContent() {
         setBooks([]); // KOSONGKAN data lama agar tidak muncul semua saat loading pencarian baru
 
         // Memanggil API Laravel dengan query parameter 'q'
-        const res = await fetch(`${API_BASE_URL}/api/books?q=${q}`);
+        const res = await fetch(`${API_BASE_URL}/books?q=${q}`);
         const result = await res.json();
         
         // Ambil data dari result.data (standar Laravel)

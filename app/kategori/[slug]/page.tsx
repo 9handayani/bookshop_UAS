@@ -46,7 +46,7 @@ export default function KategoriPage({ params }: PageProps) {
         setLoading(true);
         
         // Memanggil API Laravel dengan filter kategori
-        const res = await fetch(`${API_BASE_URL}/api/books?category=${slug}`);
+        const res = await fetch(`${API_BASE_URL}/books?category=${slug}`);
         const response = await res.json();
 
         // Mengambil data dari response.data (standar Laravel)

@@ -26,7 +26,7 @@ export default function FavoritesPage() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/books`, {
+      const response = await fetch(`${API_BASE_URL}/books`, {
         headers: { "Accept": "application/json" }
       });
       

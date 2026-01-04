@@ -31,12 +31,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const fetchData = async () => {
       try {
         // 1. Ambil Kategori
-        const catRes = await fetch(`${API_BASE_URL}/api/categories`);
+        const catRes = await fetch(`${API_BASE_URL}/categories`);
         const categories = await catRes.json();
         setCategoriesList(Array.isArray(categories) ? categories : (categories.data || []));
 
         // 2. Ambil Data Buku menggunakan ID
-        const res = await fetch(`${API_BASE_URL}/api/books/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/books/${id}`, {
           headers: { "Accept": "application/json" }
         });
 
@@ -82,7 +82,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         return;
       }
 
-      const res = await fetch(`${API_BASE_URL}/api/books/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/books/${id}`, {
         method: "PUT", 
         headers: { 
           "Content-Type": "application/json",

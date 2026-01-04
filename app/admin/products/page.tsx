@@ -58,13 +58,13 @@ export default function ManageProducts() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const prodRes = await fetch(`${API_BASE_URL}/api/books`);
+      const prodRes = await fetch(`${API_BASE_URL}/books`);
       const prodData = await prodRes.json();
       
       const cleanProdData = Array.isArray(prodData) ? prodData : (prodData.data || []);
       setProducts(cleanProdData);
 
-      const catRes = await fetch(`${API_BASE_URL}/api/categories`);
+      const catRes = await fetch(`${API_BASE_URL}/categories`);
       const catData = await catRes.json();
       setCategories(Array.isArray(catData) ? catData : (catData.data || []));
     } catch (err) {
@@ -82,7 +82,7 @@ export default function ManageProducts() {
   const handleDelete = async (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/books/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/books/${id}`, {
           method: "DELETE",
         });
         if (response.ok) {

@@ -29,7 +29,7 @@ export default function Home() {
   const fetchBooks = async (pageNumber: number) => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/books?page=${pageNumber}`);
+      const response = await fetch(`${BACKEND_URL}/books?page=${pageNumber}`);
       const result = await response.json();
       
       // Laravel membungkus data dalam 'data' jika menggunakan paginate()
