@@ -124,7 +124,7 @@ export default function BookDetailClient() {
           <div className="md:col-span-5">
             <div className="rounded-2xl border border-slate-100 p-6 shadow-sm sticky top-10 bg-white flex justify-center">
               <img 
-                src={`/books/${book.image}`} 
+                src={`/${book.image}`} 
                 className="w-full max-w-[320px] rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" 
                 alt={book.title}
                 onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg"; }}
