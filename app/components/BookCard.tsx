@@ -7,7 +7,7 @@ export default function BookCard({ book }: { book: any }) {
   const finalPrice = Math.floor(originalPrice - (originalPrice * (book.discount || 0)) / 100);
 
   return (
-    <Link href={`/book/${book.slug}`} className="group h-full">
+    <Link href={`/produk/${book.slug}`} className="group h-full">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-md transition-all">
         
         {/* AREA GAMBAR */}

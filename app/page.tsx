@@ -28,17 +28,21 @@ function HomeContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Di dalam HomeContent page.tsx
   const fetchBooks = async (pageNumber: number) => {
     try {
       setLoading(true);
       let url = `${BACKEND_URL}/books?page=${pageNumber}`;
-      if (category) url += `&category=${category}`;
-      if (query) url += `&q=${query}`;
+      
+      // Gunakan encodeURIComponent agar kategori seperti "Komik/Buku" tidak error
+      if (category) url += `&category=${encodeURIComponent(category)}`; 
+      if (query) url += `&q=${encodeURIComponent(query)}`;
 
       const response = await fetch(url);
       const result = await response.json();
       
-      const dataBuku = result.data ? result.data : result;
+      // Pastikan mengambil dari result.data jika Laravel menggunakan pagination
+      const dataBuku = result.data || result; 
       setBooks(Array.isArray(dataBuku) ? dataBuku : []);
       
       setCurrentPage(result.current_page || 1);
