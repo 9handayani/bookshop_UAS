@@ -18,17 +18,6 @@ export default function CartContent() {
 
   const isAuthenticated = !!user; 
 
-  /* ======================
-      HELPER GAMBAR (FIXED)
-  ====================== */
-  const getImageUrl = (path: string) => {
-    if (!path) return "/placeholder-book.jpg";
-    if (path.startsWith('http')) return path;
-    // Mengambil nama file saja untuk menghindari double folder 'books/books/'
-    const fileName = path.split('/').pop(); 
-    return `/books/${fileName}`;
-  };
-
   const isAllSelected =
     cart.length > 0 && cart.every((item) => selected[item.id]);
 
@@ -119,63 +108,70 @@ export default function CartContent() {
                 <Link href="/" className="mt-4 inline-block text-indigo-600 font-bold hover:underline">Mulai Belanja</Link>
               </div>
             ) : (
-              cart.map((item) => (
-                <div key={item.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-indigo-200 transition-all group">
-                  <div className="flex items-center gap-5">
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                      checked={!!selected[item.id]}
-                      onChange={() =>
-                        setSelected({ ...selected, [item.id]: !selected[item.id] })
-                      }
-                    />
-                    
-                    {/* PERBAIKAN BAGIAN GAMBAR */}
-                    <div className="w-24 h-32 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 shadow-inner">
-                      <img 
-                        src={getImageUrl(item.img)} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        alt={item.title} 
-                        onError={(e) => { e.currentTarget.src = "/placeholder-book.jpg" }}
+              cart.map((item) => {
+                {/* --- LOGIKA GAMBAR SEPERTI DI HALAMAN FAVORIT --- */}
+                const imageUrl = item.img 
+                  ? `/books/${item.img}` 
+                  : "/placeholder-book.jpg";
+
+                return (
+                  <div key={item.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-indigo-200 transition-all group">
+                    <div className="flex items-center gap-5">
+                      <input
+                        type="checkbox"
+                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        checked={!!selected[item.id]}
+                        onChange={() =>
+                          setSelected({ ...selected, [item.id]: !selected[item.id] })
+                        }
                       />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-800 text-lg truncate mb-1">{item.title}</h3>
-                      <p className="text-indigo-600 font-extrabold text-xl mb-3">
-                        Rp {(item.price * (item.qty || 1)).toLocaleString("id-ID")}
-                      </p>
-
-                      <div className="flex items-center gap-2 border border-slate-200 w-fit rounded-lg p-1">
-                        <button 
-                          onClick={() => updateQty(item.id, (item.qty || 1) - 1)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded disabled:opacity-30 font-bold"
-                          disabled={(item.qty || 1) <= 1}
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-bold text-slate-700">{item.qty || 1}</span>
-                        <button 
-                          onClick={() => updateQty(item.id, (item.qty || 1) + 1)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded font-bold"
-                        >
-                          +
-                        </button>
+                      
+                      {/* Tampilan Gambar Menggunakan Konstanta imageUrl */}
+                      <div className="w-24 h-32 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 shadow-inner">
+                        <img 
+                          src={imageUrl} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          alt={item.title} 
+                          onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder-book.jpg" }}
+                        />
                       </div>
-                    </div>
 
-                    <button 
-                      onClick={() => removeFromCart(item.id)}
-                      className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-800 text-lg truncate mb-1">{item.title}</h3>
+                        <p className="text-indigo-600 font-extrabold text-xl mb-3">
+                          Rp {(item.price * (item.qty || 1)).toLocaleString("id-ID")}
+                        </p>
+
+                        <div className="flex items-center gap-2 border border-slate-200 w-fit rounded-lg p-1">
+                          <button 
+                            onClick={() => updateQty(item.id, (item.qty || 1) - 1)}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded disabled:opacity-30 font-bold"
+                            disabled={(item.qty || 1) <= 1}
+                          >
+                            -
+                          </button>
+                          <span className="w-8 text-center font-bold text-slate-700">{item.qty || 1}</span>
+                          <button 
+                            onClick={() => updateQty(item.id, (item.qty || 1) + 1)}
+                            className="w-8 h-8 flex items-center justify-center hover:bg-slate-100 rounded font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => removeFromCart(item.id)}
+                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
