@@ -26,7 +26,7 @@ export default function BookDetailClient() {
       try {
         setLoading(true);
         // PERBAIKAN 1: Tambahkan Header Accept agar tidak error HTML
-        const res = await fetch(`process.env.NEXT_PUBLIC_API_URL/api/books/details/${slug}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/details/${slug}`, {
           headers: {
             "Accept": "application/json",
           },

@@ -13,7 +13,7 @@ function SearchContent() {
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE_URL = "process.env.NEXT_PUBLIC_API_URL";
+  const API_BASE_URL = ${process.env.NEXT_PUBLIC_API_URL};
 
   // FIX GAMBAR: Mengarah ke folder public/books Next.js (sama seperti halaman kategori)
   const getImageUrl = (path: string) => {

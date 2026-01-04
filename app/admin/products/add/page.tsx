@@ -22,7 +22,7 @@ export default function AddProductPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("process.env.NEXT_PUBLIC_API_URL/api/categories");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`);
         const data = await res.json();
         setCategoriesList(data);
         // Default kategori ke item pertama jika ada
@@ -64,7 +64,7 @@ export default function AddProductPage() {
         details: parsedDetails
       };
 
-      const res = await fetch("process.env.NEXT_PUBLIC_API_URL/api/books", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 async function getBookData(slug: string) {
   try {
-    const res = await fetch(`process.env.NEXT_PUBLIC_API_URL/api/books/${slug}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/books/${slug}`, {
       cache: 'no-store', // Mematikan cache agar data sinkron dengan DB
       headers: {
         'Accept': 'application/json',
