@@ -19,22 +19,17 @@ function SearchContent() {
 
   useEffect(() => {
     const fetchBooks = async () => {
-      // Jika tidak ada query, kita bisa arahkan balik ke home atau tampilkan semua
+      if (!q) return; // Jangan fetch jika keyword kosong
+      
       try {
         setLoading(true);
-        
-        // Memanggil API Laravel dengan query parameter 'q'
-        // Pastikan endpoint Laravel Anda sudah menangani $request->q
         const res = await fetch(`${API_BASE_URL}/books?q=${encodeURIComponent(q)}`, {
-          headers: {
-            "Accept": "application/json"
-          }
+          headers: { "Accept": "application/json" }
         });
         
         const result = await res.json();
-        
-        // Standardisasi pengambilan data dari Laravel (Paginate vs All)
-        const booksData = result.data || (Array.isArray(result) ? result : []);
+        // Laravel pagination mengembalikan data di result.data.data
+        const booksData = result.data?.data || result.data || (Array.isArray(result) ? result : []);
         setBooks(booksData);
       } catch (err) {
         console.error("Gagal mengambil data buku:", err);
@@ -45,7 +40,7 @@ function SearchContent() {
     };
     
     fetchBooks();
-  }, [q, API_BASE_URL]); // Trigger ulang setiap kali keyword 'q' berubah
+  }, [q]); // Pastikan dependensi hanya 'q' agar tidak loop
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans">

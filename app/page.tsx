@@ -62,8 +62,30 @@ function HomeContent() {
   };
 
   useEffect(() => {
-    fetchBooks(1);
-  }, [category, query]); 
+    const fetchBooks = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        
+        // Ambil dari URL searchParams
+        if (category) params.append("category", category);
+        if (query) params.append("q", query);
+
+        const response = await fetch(`${BACKEND_URL}/books?${params.toString()}`);
+        const result = await response.json();
+        
+        // Sesuaikan dengan response Laravel: { success: true, data: [...] }
+        const dataBuku = result.data?.data || result.data || [];
+        setBooks(dataBuku);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBooks();
+  }, [category, query]); // RE-FETCH SAAT URL BERUBAH
 
   useEffect(() => {
     const timer = setInterval(() => {

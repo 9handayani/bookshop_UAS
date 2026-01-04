@@ -56,9 +56,9 @@ export default function Navbar() {
   if (pathname === "/login" || pathname === "/register" || pathname.startsWith("/admin")) return null;
 
   function handleSearchEnter(e) {
-    if (e.key === "Enter" && search) {
-      router.push(`/search?q=${encodeURIComponent(search)}`);
+    if (e.key === "Enter" && search.trim() !== "") {
       setShowResults(false);
+      router.push(`/search?q=${encodeURIComponent(search.trim())}`);
     }
   }
 
@@ -67,8 +67,8 @@ export default function Navbar() {
     if (item === "Semua") {
       router.push("/");
     } else {
-      // Sesuai dengan page.tsx yang mengambil searchParams.get("category")
-      router.push(`/?category=${encodeURIComponent(item.toLowerCase())}`);
+      // Kirim item apa adanya (Contoh: "Novel")
+      router.push(`/?category=${encodeURIComponent(item)}`);
     }
     setOpenCategory(false);
   }
@@ -111,7 +111,15 @@ export default function Navbar() {
             onKeyDown={handleSearchEnter}
             className="bg-transparent outline-none ml-3 w-full text-sm text-blue-900 placeholder-blue-500"
           />
-          <button onClick={() => router.push(`/search?q=${search}`)} className="ml-3 px-4 py-1 bg-[#FFD966] hover:bg-[#F7C948] text-blue-900 font-semibold rounded-full transition shadow-sm">
+          <button 
+            onClick={() => {
+              if (search.trim()) {
+                setShowResults(false);
+                router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+              }
+            }}
+            className="ml-3 px-4 py-1 bg-[#FFD966] hover:bg-[#F7C948] text-blue-900 font-semibold rounded-full transition shadow-sm"
+          >
             Cari
           </button>
         </div>
